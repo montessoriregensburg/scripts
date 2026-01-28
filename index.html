@@ -365,7 +365,7 @@ function deleteAllLocalFiles(){
 
 </script>
 
-<!-- PI-Mini-Spiel Button -->
+<!-- Pi-Mini-Spiel Icon (versteckt, unten rechts) -->
 <div id="pi-button" 
      style="
        position:fixed;
@@ -385,7 +385,7 @@ function deleteAllLocalFiles(){
        z-index:9999;
      " title="Pi-Mini-Spiel">π</div>
 
-<!-- PI-Mini-Spiel Overlay -->
+<!-- Pi-Mini-Spiel Overlay (hidden) -->
 <div id="pi-overlay" style="
      display:none;
      position:fixed;
@@ -394,7 +394,6 @@ function deleteAllLocalFiles(){
      z-index:10000;
      font-family:Arial, sans-serif;
      color:white;
-     display:flex;
      justify-content:center;
      align-items:center;
 ">
@@ -437,7 +436,7 @@ for(let i=0; i<=9; i++){
   piButtonsContainer.appendChild(btn);
 }
 
-// Spiel starten
+// Spiel erst bei Klick starten
 piButton.onclick = ()=>{
   piIndex = 0;
   piDisplay.textContent = "3.";
@@ -474,5 +473,7 @@ document.addEventListener("keydown", e=>{
 
 
 
+
 </body>
 </html>
+
