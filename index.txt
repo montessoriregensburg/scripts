@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Prüfungsvorbereitung Portal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root {
+  --accent: #ff2d2d;
+  --bg: #0f0f0f;
+  --card: #1e1e1e;
+  --text: #fff;
+  --font: "Arial", sans-serif;
+  --fontsize: 15px;
+}
+body {
+  margin:0;
+  font-family: var(--font);
+  font-size: var(--fontsize);
+  background: var(--bg);
+  color: var(--text);
+  padding:20px;
+  padding-bottom:220px;
+  transition: all 0.3s;
+}
+h1 { margin-bottom:10px; }
+.update { background: var(--accent); color:#000; padding:12px; border-radius:12px; margin-bottom:15px; font-weight:bold; text-align:center; }
+input, select, button { padding:10px; border-radius:10px; border:none; font-size: var(--fontsize); transition: all 0.3s; }
+button { cursor:pointer; font-weight:bold; background: var(--accent); color:#000; transition: all 0.3s; }
+.tags { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
+.tag { background:#2a2a2a; padding:6px 14px; border-radius:20px; cursor:pointer; transition: all 0.3s; }
+.tag.active { background: var(--accent); color:#000; }
+.file { background: var(--card); padding:15px; border-radius:14px; margin-bottom:25px; transition: all 0.3s; overflow:hidden; }
+.file strong { font-size:18px; display:block; margin-bottom:5px; }
+.file .info { font-size:13px; color:#aaa; margin-bottom:8px; }
+.file .buttons { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; align-items:center; }
+.file .buttons a, .file .buttons button { text-decoration:none; padding:8px 14px; border-radius:10px; font-weight:bold; cursor:pointer; transition: all 0.3s; }
+.file .buttons a.view { background:#333; color:#fff; }
+.file .buttons a.download { background: var(--accent); color:#000; }
+.file .checkbox { margin-left:10px; cursor:pointer; }
+#adminPanel { display:none; margin-top:20px; background:#1a1a1a; padding:15px; border-radius:12px; }
+iframe { width:100%; height:450px; border-radius:12px; border:none; margin-top:10px; transition: transform 0.3s, box-shadow 0.3s; }
+.file:hover iframe { transform: scale(1.02); box-shadow:0 0 20px var(--accent); }
+
+/* Settings Panel */
+#settingsPanel { margin-bottom:20px; background:#1a1a1a; padding:15px; border-radius:12px; display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:10px; align-items:center; }
+#settingsPanel label { display:flex; flex-direction:column; font-size:12px; }
+#settingsPanel select, #settingsPanel input { margin-top:5px; }
+
+/* Sticky Bottom Bar */
+.sticky { position:fixed; bottom:0; left:0; width:100%; background:#141414; padding:15px; border-top:2px solid var(--accent); display:flex; justify-content:space-around; flex-wrap:wrap; gap:10px; z-index:999; }
+.sticky button { flex:1 0 120px; transition: all 0.3s; }
+
+table { width:100%; border-collapse:collapse; margin-top:15px; border-radius:10px; overflow:hidden; }
+th, td { padding:10px; border:1px solid var(--accent); text-align:left; }
+th { background:var(--accent); color:#000; }
+</style>
+</head>
+<body>
+
+<div id="settingsPanel">
+  <label>Hintergrund <input type="color" id="bgColor" value="#0f0f0f"></label>
+  <label>Textfarbe <input type="color" id="textColor" value="#ffffff"></label>
+  <label>Akzentfarbe <input type="color" id="accentColor" value="#ff2d2d"></label>
+  <label>Schriftart 
+    <select id="fontSelect">
+      <option value="Arial, sans-serif">Arial</option>
+      <option value="Verdana, sans-serif">Verdana</option>
+      <option value="Courier New, monospace">Courier New</option>
+      <option value="Georgia, serif">Georgia</option>
+    </select>
+  </label>
+  <label>Schriftgröße <input type="number" id="fontSize" value="15" min="10" max="30">px</label>
+  <label>Voreingestelltes Design
+    <select id="presetDesigns">
+      <option value="0">Standard (Dunkel/Rot)</option>
+      <option value="1">Hell/Blau</option>
+      <option value="2">Grün/Schwarz</option>
+      <option value="3">Violett/Dunkel</option>
+      <option value="4">Orange/Hell</option>
+      <option value="5">Neon/Schwarz</option>
+    </select>
+  </label>
+  <button onclick="toggleTheme()">Dark/Light</button>
+</div>
+
+<div class="update">🔔 Version 0.2 – Mathe + Design + Tags & sortierte Impulsen</div>
+
+<h1>📂 Prüfungsvorbereitung</h1>
+<p id="stats">📊 Downloads gesamt: 512</p>
+
+<input id="search" placeholder="🔍 Datei suchen …">
+
+<div class="tags" id="tagContainer"></div>
+
+<div id="fileList"></div>
+
+<hr>
+
+<button onclick="login()">Admin Login</button>
+<button onclick="logout()">Logout</button>
+
+<div id="adminPanel">
+<h3>➕ Neue Datei hinzufügen</h3>
+<input id="fname" placeholder="Dateiname">
+<input id="gid" placeholder="Google Drive Link">
+<select id="ftype">
+  <option value="doc">Textdokument</option>
+  <option value="slides">Präsentation</option>
+  <option value="pdf">PDF</option>
+</select>
+<input id="ftags" placeholder="Tags durch Komma trennen">
+<button onclick="addFile()">➕ Datei hinzufügen</button>
+
+<h3>📋 Alle Dateien als Tabelle anzeigen</h3>
+<button onclick="showTable()">Tabelle erstellen</button>
+<div id="fileTableContainer"></div>
+
+<h3>💾 Daten als CSV exportieren</h3>
+<button onclick="exportCSV()">CSV exportieren</button>
+</div>
+
+<div class="sticky">
+  <button onclick="alert('ZIP-Download (Server nötig)')">📦 ZIP-Download</button>
+  <button onclick="login()">🔒 Admin</button>
+  <button onclick="window.scrollTo({top:0, behavior:'smooth'})">⬆️ Top</button>
+</div>
+
+<script>
+// Admin Login
+const ADMIN_USER="admin", ADMIN_PASS="1234";
+
+// Presets
+const presets=[
+  {name:"Standard Dunkel/Rot", bg:"#0f0f0f", text:"#ffffff", accent:"#ff2d2d", font:"Arial, sans-serif", fsize:15},
+  {name:"Hell/Blau", bg:"#f0f0f0", text:"#000000", accent:"#3498db", font:"Verdana, sans-serif", fsize:15},
+  {name:"Grün/Schwarz", bg:"#001f00", text:"#ffffff", accent:"#2ecc71", font:"Georgia, serif", fsize:16},
+  {name:"Violett/Dunkel", bg:"#1a001a", text:"#ffffff", accent:"#9b59b6", font:"Courier New, monospace", fsize:16},
+  {name:"Orange/Hell", bg:"#fff8f0", text:"#333333", accent:"#e67e22", font:"Arial, sans-serif", fsize:15},
+  {name:"Neon/Schwarz", bg:"#000000", text:"#39ff14", accent:"#ff00ff", font:"Verdana, sans-serif", fsize:16}
+];
+
+// Style Live Anwenden
+function applyStyle(bg, text, accent, font, fsize){
+  document.documentElement.style.setProperty("--bg", bg);
+  document.documentElement.style.setProperty("--text", text);
+  document.documentElement.style.setProperty("--accent", accent);
+  document.body.style.fontFamily = font;
+  document.body.style.fontSize = fsize+"px";
+  document.getElementById("bgColor").value = bg;
+  document.getElementById("textColor").value = text;
+  document.getElementById("accentColor").value = accent;
+  document.getElementById("fontSelect").value = font;
+  document.getElementById("fontSize").value = fsize;
+  localStorage.setItem("bgColor", bg);
+  localStorage.setItem("textColor", text);
+  localStorage.setItem("accentColor", accent);
+  localStorage.setItem("fontFamily", font);
+  localStorage.setItem("fontSize", fsize);
+}
+
+// Inputs live
+document.getElementById("bgColor").oninput=e=>applyStyle(e.target.value, document.getElementById("textColor").value, document.getElementById("accentColor").value, document.getElementById("fontSelect").value, document.getElementById("fontSize").value);
+document.getElementById("textColor").oninput=e=>applyStyle(document.getElementById("bgColor").value,e.target.value,document.getElementById("accentColor").value,document.getElementById("fontSelect").value,document.getElementById("fontSize").value);
+document.getElementById("accentColor").oninput=e=>applyStyle(document.getElementById("bgColor").value,document.getElementById("textColor").value,e.target.value,document.getElementById("fontSelect").value,document.getElementById("fontSize").value);
+document.getElementById("fontSelect").onchange=e=>applyStyle(document.getElementById("bgColor").value,document.getElementById("textColor").value,document.getElementById("accentColor").value,e.target.value,document.getElementById("fontSize").value);
+document.getElementById("fontSize").oninput=e=>applyStyle(document.getElementById("bgColor").value,document.getElementById("textColor").value,document.getElementById("accentColor").value,document.getElementById("fontSelect").value,e.target.value);
+
+// Preset
+document.getElementById("presetDesigns").onchange=e=>{
+  const p=presets[e.target.value];
+  applyStyle(p.bg,p.text,p.accent,p.font,p.fsize);
+}
+
+// Dark/Light Toggle
+function toggleTheme(){
+  const currentBg=getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
+  if(currentBg==="#0f0f0f"){ applyStyle("#ffffff","#000000","#3498db","Verdana, sans-serif",15); document.getElementById("presetDesigns").value="1"; }
+  else{ applyStyle("#0f0f0f","#ffffff","#ff2d2d","Arial, sans-serif",15); document.getElementById("presetDesigns").value="0"; }
+}
+
+// Lade Style
+function loadStyle(){
+  applyStyle(localStorage.getItem("bgColor")||presets[0].bg,
+             localStorage.getItem("textColor")||presets[0].text,
+             localStorage.getItem("accentColor")||presets[0].accent,
+             localStorage.getItem("fontFamily")||presets[0].font,
+             localStorage.getItem("fontSize")||presets[0].fsize);
+}
+loadStyle();
+
+// Dateien numerisch sortiert
+let defaultFiles=[
+  {name:"Impuls 1 - Potenzen und Wurzeln", type:"pdf", googleId:"", version:"v1.0", important:false, tags:["Mathe","Klasse 10"]},
+  {name:"Impuls 2 - Potenzen und Wurzeln", type:"pdf", googleId:"", version:"v1.0", important:false, tags:["Mathe","Klasse 10"]},
+  {name:"Impuls 3 - Potenzen und Wurzeln", type:"pdf", googleId:"", version:"v1.0", important:false, tags:["Mathe","Klasse 10"]},
+  {name:"Impuls 4 - Wiederholung Potenzrechnung - Exponentielles Wachstum", type:"pdf", googleId:"", version:"v1.0", important:false, tags:["Mathe","Klasse 10"]},
+  {name:"Impuls 5 - Exponentielle Wachstumsprozesse von linearem Wachstum abgrenzen", type:"pdf", googleId:"", version:"v1.0", important:false, tags:["Mathe","Klasse 10"]},
+  {name:"Impuls 6 - exponentielles Kapitalwachstum und Zu- und Abnahmen bei der Bevölkerung...", type:"pdf", googleId:"", version:"v1.0", important:false, tags:["Mathe","Klasse 10"]},
+  {name:"Impuls 7 - Berechnung von Größen beim radioaktiven Zerfall", type:"pdf", googleId:"", version:"v1.0", important:false, tags:["Mathe","Klasse 10"]},
+  {name:"Impuls 9 - Aufgaben zum Üben für den Test (Abschlussrunde)", type:"pdf", googleId:"", version:"v1.0", important:false, tags:["Mathe","Klasse 10"]},
+  {name:"Impuls 10 - Einführung lineare Funktionen", type:"pdf", googleId:"", version:"v1.0", important:false, tags:["Mathe","Klasse 10"]},
+  {name:"Impuls 11 - Zeichnen von linearen Funktionen - Aufstellen von Funktionsgleichungen (1. Fall)", type:"pdf", googleId:"", version:"v1.0", important:false, tags:["Mathe","Klasse 10"]},
+  {name:"Impuls 12 - Aufstellen von Funktionsgleichungen (2. Fall)", type:"pdf", googleId:"", version:"v1.0", important:false, tags:["Mathe","Klasse 10"]},
+  {name:"Impuls 13 - Punktprobe, parallele und senkrechte Geraden", type:"pdf", googleId:"", version:"v1.0", important:false, tags:["Mathe","Klasse 10"]},
+  {name:"Impuls 14 - Schnittpunkte von Geraden mit den Koordinatenachsen, verschiedene Aufgabenstellungen", type:"pdf", googleId:"", version:"v1.0", important:false, tags:["Mathe","Klasse 10"]},
+  {name:"Impuls 15 - Achsenschnittpunkte und Schnittpunkte zweier Geraden berechnen", type:"pdf", googleId:"", version:"v1.0", important:false, tags:["Mathe","Klasse 10"]},
+  {name:"Impuls 16 - besondere Geraden, Spiegelungen, Abstand zweier Punkte berechnen", type:"pdf", googleId:"", version:"v1.0", important:false, tags:["Mathe","Klasse 10"]},
+  {name:"Impuls 17 - Lineare Gleichungssysteme lösen", type:"pdf", googleId:"", version:"v1.0", important:false, tags:["Mathe","Klasse 10"]},
+  {name:"Impuls 18 - Aufstellen von linearen Gleichungssystemen", type:"pdf", googleId:"", version:"v1.0", important:false, tags:["Mathe","Klasse 10"]},
+  {name:"Impuls 19 - Musterprüfungen", type:"pdf", googleId:"", version:"v1.0", important:false, tags:["Mathe","Klasse 10"]},
+  {name:"Impuls 20 - Geometrie - Volumen und Oberflächeninhalt einer Kugel", type:"pdf", googleId:"", version:"v1.0", important:false, tags:["Mathe","Klasse 10"]},
+  {name:"Impuls 21 - Aufgaben zu Volumen und Oberflächeninhalt von Kugeln", type:"pdf", googleId:"", version:"v1.0", important:false, tags:["Mathe","Klasse 10"]},
+  {name:"Impuls 22 - Geometrie (Kugel) MSA-Aufgaben 2023 und 2024", type:"pdf", googleId:"", version:"v1.0", important:false, tags:["Mathe","Klasse 10"]},
+  {name:"Impuls 23 - Zentrische Streckung - Ähnliche Welten", type:"pdf", googleId:"", version:"v1.0", important:false, tags:["Mathe","Klasse 10"]},
+  {name:"Impuls 24 - Zentrische Streckung (Flächeninhalt von Bildfiguren, Volumen von Bildkörpern)", type:"pdf", googleId:"", version:"v1.0", important:false, tags:["Mathe","Klasse 10"]},
+  {name:"Impuls 25 - Geometrie - Strahlensätze (1)", type:"pdf", googleId:"", version:"v1.0", important:false, tags:["Mathe","Klasse 10"]},
+  {name:"Impuls 26 - Geometrie - Strahlensätze (X-Figur) und Anwendung der Strahlensätze", type:"pdf", googleId:"", version:"v1.0", important:false, tags:["Mathe","Klasse 10"]},
+  {name:"Impuls 27 - Geometrie - Satzgruppe des Pythagoras (Katheten- und Höhensatz)", type:"pdf", googleId:"", version:"v1.0", important:false, tags:["Mathe","Klasse 10"]},
+  {name:"Projektprüfung Mappe", type:"doc", googleId:"", version:"v1.0", important:true, tags:["Projektprüfung","Textdokument"]},
+  {name:"Projektprüfung Präsentation", type:"slides", googleId:"", version:"v1.0", important:true, tags:["Projektprüfung","Präsentation"]}
+];
+
+let customFiles=JSON.parse(localStorage.getItem("files"))||[];
+let downloads=Number(localStorage.getItem("downloads"))||0;
+document.getElementById("stats").innerText=`📊 Downloads gesamt: ${downloads}`;
+
+function getLinks(file){
+  if(file.type==="doc") return {view:`https://docs.google.com/document/d/${file.googleId}/preview`, download:`https://docs.google.com/document/d/${file.googleId}/export?format=pdf`};
+  if(file.type==="slides") return {view:`https://docs.google.com/presentation/d/${file.googleId}/preview`, download:`https://docs.google.com/presentation/d/${file.googleId}/export/pdf`};
+  if(file.type==="pdf") return {view:`https://drive.google.com/file/d/${file.googleId}/preview`, download:`https://drive.google.com/uc?export=download&id=${file.googleId}`};
+}
+function saveFiles(){ localStorage.setItem("files",JSON.stringify(customFiles)); }
+
+function renderFiles(){
+  const list=document.getElementById("fileList");
+  list.innerHTML="";
+  const allFiles=[...defaultFiles,...customFiles];
+  const isAdmin=localStorage.getItem("isAdmin")==="true";
+
+  const tagContainer=document.getElementById("tagContainer");
+  let tagsSet=new Set();
+  allFiles.forEach(f=>f.tags.forEach(t=>tagsSet.add(t)));
+  tagContainer.innerHTML="";
+  const allBtn=document.createElement("div");
+  allBtn.className="tag active"; allBtn.dataset.tag="all"; allBtn.innerText="Alle";
+  allBtn.onclick=()=>filterByTag("all",allBtn); tagContainer.appendChild(allBtn);
+  tagsSet.forEach(t=>{
+    const div=document.createElement("div");
+    div.className="tag"; div.dataset.tag=t; div.innerText=t;
+    div.onclick=()=>filterByTag(t,div); tagContainer.appendChild(div);
+  });
+
+  allFiles.forEach((file,index)=>{
+    const links=getLinks(file);
+    const downloaded=Number(localStorage.getItem("downloaded_"+file.googleId))||0;
+    const tagsStr=file.tags.join(", ");
+    list.innerHTML+=`
+      <div class="file" data-title="${file.name.toLowerCase()}" data-tags="${file.tags.join(",").toLowerCase()}">
+        <strong>${file.name}</strong> ${file.important?"🔥":""}
+        <div class="info">${file.version} | Tags: ${tagsStr} | Downloads: ${downloaded}</div>
+        <div class="buttons">
+          <a class="view" href="${links.view}" target="_blank">Ansicht</a>
+          <a class="download" href="${links.download}" onclick="count('${file.googleId}')">Download</a>
+          <label class="checkbox"><input type="checkbox" onclick="toggleDownloaded('${file.googleId}')" ${downloaded>0?"checked":""}> Hab ich geladen</label>
+          ${isAdmin?`<button onclick="deleteFile(${index})">🗑️</button>`:""}
+        </div>
+        <iframe src="${links.view}"></iframe>
+      </div>`;
+  });
+}
+
+// Download-Zähler
+function count(gid){ downloads++; localStorage.setItem("downloads",downloads); localStorage.setItem("downloaded_"+gid,Number(localStorage.getItem("downloaded_"+gid)||0)+1); document.getElementById("stats").innerText=`📊 Downloads gesamt: ${downloads}`; renderFiles(); }
+function toggleDownloaded(gid){ const key="downloaded_"+gid; localStorage.setItem(key,!JSON.parse(localStorage.getItem(key))); renderFiles(); }
+document.getElementById("search").oninput=()=>{ const v=document.getElementById("search").value.toLowerCase(); document.querySelectorAll(".file").forEach(f=>f.style.display=f.dataset.title.includes(v)?"block":"none");}
+function filterByTag(tag,element){ document.querySelectorAll(".tag").forEach(x=>x.classList.remove("active")); element.classList.add("active"); document.querySelectorAll(".file").forEach(f=>f.style.display=(tag==="all"||f.dataset.tags.includes(tag.toLowerCase()))?"block":"none");}
+
+// Admin
+function login(){ const u=prompt("Admin Name:"); const p=prompt("Passwort:"); if(u===ADMIN_USER && p===ADMIN_PASS){ localStorage.setItem("isAdmin","true"); document.getElementById("adminPanel").style.display="block"; renderFiles(); alert("Admin aktiv");} else alert("Falsch!"); }
+function logout(){ localStorage.removeItem("isAdmin"); document.getElementById("adminPanel").style.display="none"; renderFiles(); }
+
+// Admin: Neue Datei hinzufügen
+function addFile(){
+  const name=document.getElementById("fname").value.trim();
+  const link=document.getElementById("gid").value.trim();
+  const type=document.getElementById("ftype").value;
+  const tags=document.getElementById("ftags").value.split(",").map(t=>t.trim()).filter(t=>t);
+
+  if(!name || !link){
+    alert("Bitte Name und Link eingeben!");
+    return;
+  }
+
+  let idMatch = link.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if(!idMatch){ alert("Ungültiger Google Drive Link!"); return; }
+  const fileId = idMatch[1];
+
+  customFiles.push({name,type,googleId:fileId,version:"v1.0",important:false,tags});
+  saveFiles();
+  renderFiles();
+  document.getElementById("fname").value="";
+  document.getElementById("gid").value="";
+  document.getElementById("ftags").value="";
+}
+
+// Tabelle & CSV
+function showTable(){
+  const allFiles=[...defaultFiles,...customFiles];
+  let html="<table><tr><th>Name</th><th>Typ</th><th>Version</th><th>Tags</th><th>Downloads</th></tr>";
+  allFiles.forEach(f=>{
+    const d=Number(localStorage.getItem("downloaded_"+f.googleId))||0;
+    html+=`<tr><td>${f.name}</td><td>${f.type}</td><td>${f.version}</td><td>${f.tags.join(", ")}</td><td>${d}</td></tr>`;
+  });
+  html+="</table>";
+  document.getElementById("fileTableContainer").innerHTML=html;
+}
+
+function exportCSV(){
+  const allFiles=[...defaultFiles,...customFiles];
+  let csv="Name,Typ,Version,Tags,Downloads\n";
+  allFiles.forEach(f=>{
+    const d=Number(localStorage.getItem("downloaded_"+f.googleId))||0;
+    csv+=`"${f.name}","${f.type}","${f.version}","${f.tags.join(", ")}","${d}"\n`;
+  });
+  const blob=new Blob([csv],{type:"text/csv"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download="files.csv"; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Delete
+function deleteFile(index){ if(confirm("Datei wirklich löschen?")){ customFiles.splice(index-defaultFiles.length,1); saveFiles(); renderFiles(); } }
+
+renderFiles();
+</script>
+</body>
+</html>
+
+
