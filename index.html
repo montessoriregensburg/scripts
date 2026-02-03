@@ -39,8 +39,17 @@ button { cursor:pointer; font-weight:bold; background: var(--accent); color:#000
 .file .buttons a.download { background: var(--accent); color:#000; }
 .file .checkbox { margin-left:10px; cursor:pointer; }
 #adminPanel { display:none; margin-top:20px; background:#1a1a1a; padding:15px; border-radius:12px; }
-iframe { width:100%; height:450px; border-radius:12px; border:none; margin-top:10px; transition: transform 0.3s, box-shadow 0.3s; }
-.file:hover iframe { transform: scale(1.02); box-shadow:0 0 20px var(--accent); }
+.preview-frame { 
+  width:100%; 
+  height:450px; 
+  border-radius:12px; 
+  border:none; 
+  margin-top:10px; 
+  display: none;
+}
+.preview-frame.show { 
+  display: block; 
+}
 
 /* Settings Panel */
 #settingsPanel { margin-bottom:20px; background:#1a1a1a; padding:15px; border-radius:12px; display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:10px; align-items:center; }
@@ -90,6 +99,7 @@ th { background:var(--accent); color:#000; }
 <p id="stats">📊 Downloads gesamt: 512</p>
 
 <input id="search" placeholder="🔍 Datei suchen …">
+<button onclick="toggleAllPreviews()" style="margin-bottom:20px;">👁️ Alle Vorschauen an/aus</button>
 
 <div class="tags" id="tagContainer"></div>
 
@@ -110,6 +120,9 @@ th { background:var(--accent); color:#000; }
   <option value="pdf">PDF</option>
 </select>
 <input id="ftags" placeholder="Tags durch Komma trennen">
+<label style="display:flex; align-items:center; gap:10px; margin-top:10px;">
+  <input type="checkbox" id="fpreview"> Vorschau aktivieren
+</label>
 <button onclick="addFile()">➕ Datei hinzufügen</button>
 
 <h3>📋 Alle Dateien als Tabelle anzeigen</h3>
@@ -196,104 +209,98 @@ function loadStyle(){
 }
 loadStyle();
 
+// Vorschau umschalten
+function togglePreview(button, fileId) {
+  const frame = button.parentElement.parentElement.querySelector('.preview-frame');
+  const hasPreview = frame.getAttribute('data-has-preview') === 'true';
+  
+  if (!hasPreview) {
+    alert('Diese Datei hat keine Vorschau aktiviert.');
+    return;
+  }
+  
+  frame.classList.toggle('show');
+  button.textContent = frame.classList.contains('show') ? '👁️ Vorschau verstecken' : '👁️ Vorschau zeigen';
+}
+
+// Alle Vorschauen umschalten
+function toggleAllPreviews() {
+  const frames = document.querySelectorAll('.preview-frame[data-has-preview="true"]');
+  const buttons = document.querySelectorAll('.preview-btn');
+  
+  if (frames.length === 0) return;
+  
+  const showAll = !frames[0].classList.contains('show');
+  
+  frames.forEach(frame => {
+    if (showAll) {
+      frame.classList.add('show');
+    } else {
+      frame.classList.remove('show');
+    }
+  });
+  
+  buttons.forEach(btn => {
+    if (btn.parentElement.parentElement.querySelector('.preview-frame').getAttribute('data-has-preview') === 'true') {
+      btn.textContent = showAll ? '👁️ Vorschau verstecken' : '👁️ Vorschau zeigen';
+    }
+  });
+}
+
 // Dateien numerisch sortiert
 let defaultFiles=[
-  {name:"Impuls 1 - Potenzen und Wurzeln", type:"pdf", googleId:"1K3fuoW8fUEJKSF40SV1prjVcgiEYk9Q-", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"]},
-  {name:"Impuls 2 - Potenzen und Wurzeln", type:"pdf", googleId:"1jQPdxk7zcjjqKNGCtMIwA0GF-V0WigUA", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"]},
-  {name:"Impuls 3 - Potenzen und Wurzeln", type:"pdf", googleId:"1sbbDAcAOrREqA4ygLzgSBPBlNy8oT1xZ", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"]},
-  {name:"Impuls 4 - Wiederholung Potenzrechnung - Exponentielles Wachstum", type:"pdf", googleId:"1BVSIkECgQVE4Sn_d6Ljwr2EYvIgGIIaY", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"]},
-  {name:"Impuls 5 - Exponentielle Wachstumsprozesse von linearem Wachstum abgrenzen", type:"pdf", googleId:"1S9abXjtsaZr-8ikRX5nL0FiTOwQne8ZY", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"]},
-  {name:"Impuls 6 - exponentielles Kapitalwachstum und Zu- und Abnahmen bei der Bevölkerung...", type:"pdf", googleId:"1usqDNOjMydGuKFR5y-mWqaBhD9IIWXi_", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"]},
-
-  {name:"Impuls 7 - Berechnung von Größen beim radioaktiven Zerfall", type:"pdf", googleId:"1GbpRQUrvkF-KsFg-6yFwLw5VWlKOmczI", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"]},
-
-
-{name: "Impuls 8 - Lösen von Aufgaben zum Üben für den Test nächste Woche", type:"pdf", googleId:"1OIM0SGGuAeMzClG71Kh068CzBnHZAlGb", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"]},
-
-
-
-  {name:"Impuls 9 - Aufgaben zum Üben für den Test (Abschlussrunde)", type:"pdf", googleId:"1FH3RjOvTLgqyw-QyzMN89iBCkc8ZuV41", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"]},
-  {name:"Impuls 10 - Einführung lineare Funktionen", type:"pdf", googleId:"1ACk6HMmUhfx8x5OonpgERVdpv26I8hiF", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"]},
-  {name:"Impuls 11 - Zeichnen von linearen Funktionen - Aufstellen von Funktionsgleichungen (1. Fall)", type:"pdf", googleId:"1obkEpA9Le16leqjp6G1OBNFPgTfOioUp", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"]},
-  {name:"Impuls 12 - Aufstellen von Funktionsgleichungen (2. Fall)", type:"pdf", googleId:"1q61mqrxHadfkxaabQhP-qAUL8F-dUB7I", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"]},
-  {name:"Impuls 13 - Punktprobe, parallele und senkrechte Geraden", type:"pdf", googleId:"1JrkPgo53N-hNidc0lviecovDIgsib9tL", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"]},
-  {name:"Impuls 14 - Schnittpunkte von Geraden mit den Koordinatenachsen, verschiedene Aufgabenstellungen", type:"pdf", googleId:"1SwXSkMmjsOtHBMkxgrYp0dXr_1PNhYq_", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"]},
-  {name:"Impuls 15 - Achsenschnittpunkte und Schnittpunkte zweier Geraden berechnen", type:"pdf", googleId:"1FazxQ_cMHWR-nnus3DX4wulVdldR0_Pb", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"]},
-  {name:"Impuls 16 - besondere Geraden, Spiegelungen, Abstand zweier Punkte berechnen", type:"pdf", googleId:"1Rod09nQCpd25BrCjmimmF8dbxL3fyRBv", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"]},
-  {name:"Impuls 17 - Lineare Gleichungssysteme lösen", type:"pdf", googleId:"1zuT03IBcVLy3fZehuhJYlPoPvJUIWoxb", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"]},
-  {name:"Impuls 18 - Aufstellen von linearen Gleichungssystemen", type:"pdf", googleId:"1EnOCW8qxi7oO7aVFtne3gNBHbUscQFzp", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"]},
-  {name:"Impuls 19 - Musterprüfungen", type:"pdf", googleId:"1u6lQV-jCGOCCD2UKr0dlcBHp-wUpT0eh", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"]},
-  {name:"Impuls 20 - Geometrie - Volumen und Oberflächeninhalt einer Kugel", type:"pdf", googleId:"12CF1dK1-1m5GCuuSeKIgedhMKobd52im", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"]},
-  {name:"Impuls 21 - Aufgaben zu Volumen und Oberflächeninhalt von Kugeln", type:"pdf", googleId:"1uTKn5jZqk-Osp6Kj2y51S0-oZoDMg2-u", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"]},
-  {name:"Impuls 22 - Geometrie (Kugel) MSA-Aufgaben 2023 und 2024", type:"pdf", googleId:"1uV2hYvykZYAmXm5tzLI5URY4Xld_dslZ", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"]},
-  {name:"Impuls 23 - Zentrische Streckung - Ähnliche Welten", type:"pdf", googleId:"1AV_zWLExA7ZdVPGkXbtfFL-3eDo1mr-Z", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"]},
-  {name:"Impuls 24 - Zentrische Streckung (Flächeninhalt von Bildfiguren, Volumen von Bildkörpern)", type:"pdf", googleId:"170UB-7gmhUUKsgJnLa4AbKSFt-hEgwIl", version:"v1.0", important:false, tags:["Mathe","Klasse 10"]},
-  {name:"Impuls 25 - Geometrie - Strahlensätze (1)", type:"pdf", googleId:"1gWuJcll1F_yF7UGfPZKiz6lgTQfz_19K", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"]},
-  {name:"Impuls 26 - Geometrie - Strahlensätze (X-Figur) und Anwendung der Strahlensätze", type:"pdf", googleId:"1sZS52r03HinpWe-sLOp5Va3qfleMG5oe", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"]},
-  {name:"Impuls 27 - Geometrie - Satzgruppe des Pythagoras (Katheten- und Höhensatz)", type:"pdf", googleId:"1hsMy7AytPWxa8rLZziCvZpI_GdO-C3aw", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"]},
-  {name:"Impuls 28 - Geometrie - Satz von Thales - Rechteck in flächengleiches Quadrat umwandeln",
- type:"pdf",
- googleId:"1Kk9VC_4uoDGeP918JnIe7xzJv5s3l1vc",
- version:"v1.0",
- important:false,
- tags:["Mathe","Klasse 10","PDF"]},
-  {name:"Projektprüfung Mappe (Vorlage leer)", type:"doc", googleId:"1ZY8C2G8pJTaIPYN4JIjsvms9sBv-TnGp", version:"v1.0", important:true, tags:["Projektprüfung","Textdokument"]},
-  {name:"Projektprüfung Präsentation (Vorlage leer)", type:"slides", googleId:"1ZsbD8ONeiFa9GTXQk0_vY-VeCHCaPBcP", version:"v1.0", important:true, tags:["Projektprüfung","Präsentation"]},
-
-{name:"Inhaltsangabe pragmatischer Texte",
- type:"pdf",
- googleId:"1NgmdB78YfK-_43Ddkw-wJlB0Wh3-fxxL",
- version:"v1.0",
- important:false,
- tags:["Deutsch","Klasse 10","PDF"]},
-
-{name:"Inhaltsangabe literarischer Texte",
- type:"pdf",
- googleId:"1S0uEDpgT0YVV5A0D0nczr7PNNfmgt2iA",
- version:"v1.0",
- important:false,
- tags:["Deutsch","Klasse 10","PDF"]},
-
-{name:"Der innere Monolog",
- type:"pdf",
- googleId:"1zQSlF-NYL-H7a9XDwteoFnv8uN5H5Puy",
- version:"v1.0",
- important:false,
- tags:["Deutsch","Klasse 10","PDF"]},
-
-{name:"Der Konjunktiv",
- type:"pdf",
- googleId:"1epLQ2gJHIioP001jOS1A8yFr3WsrY1e4",
- version:"v1.0",
- important:false,
- tags:["Deutsch","Klasse 10","PDF"]},
+  {name:"Impuls 1 - Potenzen und Wurzeln", type:"pdf", googleId:"1K3fuoW8fUEJKSF40SV1prjVcgiEYk9Q-", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
+  {name:"Impuls 2 - Potenzen und Wurzeln", type:"pdf", googleId:"1jQPdxk7zcjjqKNGCtMIwA0GF-V0WigUA", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
+  {name:"Impuls 3 - Potenzen und Wurzeln", type:"pdf", googleId:"1sbbDAcAOrREqA4ygLzgSBPBlNy8oT1xZ", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
+  {name:"Impuls 4 - Wiederholung Potenzrechnung - Exponentielles Wachstum", type:"pdf", googleId:"1BVSIkECgQVE4Sn_d6Ljwr2EYvIgGIIaY", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
+  {name:"Impuls 5 - Exponentielle Wachstumsprozesse von linearem Wachstum abgrenzen", type:"pdf", googleId:"1S9abXjtsaZr-8ikRX5nL0FiTOwQne8ZY", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
+  {name:"Impuls 6 - exponentielles Kapitalwachstum und Zu- und Abnahmen bei der Bevölkerung...", type:"pdf", googleId:"1usqDNOjMydGuKFR5y-mWqaBhD9IIWXi_", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
+  {name:"Impuls 7 - Berechnung von Größen beim radioaktiven Zerfall", type:"pdf", googleId:"1GbpRQUrvkF-KsFg-6yFwLw5VWlKOmczI", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
+  {name:"Impuls 8 - Lösen von Aufgaben zum Üben für den Test nächste Woche", type:"pdf", googleId:"1OIM0SGGuAeMzClG71Kh068CzBnHZAlGb", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
+  {name:"Impuls 9 - Aufgaben zum Üben für den Test (Abschlussrunde)", type:"pdf", googleId:"1FH3RjOvTLgqyw-QyzMN89iBCkc8ZuV41", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
+  {name:"Impuls 10 - Einführung lineare Funktionen", type:"pdf", googleId:"1ACk6HMmUhfx8x5OonpgERVdpv26I8hiF", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
+  {name:"Impuls 11 - Zeichnen von linearen Funktionen - Aufstellen von Funktionsgleichungen (1. Fall)", type:"pdf", googleId:"1obkEpA9Le16leqjp6G1OBNFPgTfOioUp", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
+  {name:"Impuls 12 - Aufstellen von Funktionsgleichungen (2. Fall)", type:"pdf", googleId:"1q61mqrxHadfkxaabQhP-qAUL8F-dUB7I", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
+  {name:"Impuls 13 - Punktprobe, parallele und senkrechte Geraden", type:"pdf", googleId:"1JrkPgo53N-hNidc0lviecovDIgsib9tL", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
+  {name:"Impuls 14 - Schnittpunkte von Geraden mit den Koordinatenachsen, verschiedene Aufgabenstellungen", type:"pdf", googleId:"1SwXSkMmjsOtHBMkxgrYp0dXr_1PNhYq_", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
+  {name:"Impuls 15 - Achsenschnittpunkte und Schnittpunkte zweier Geraden berechnen", type:"pdf", googleId:"1FazxQ_cMHWR-nnus3DX4wulVdldR0_Pb", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
+  {name:"Impuls 16 - besondere Geraden, Spiegelungen, Abstand zweier Punkte berechnen", type:"pdf", googleId:"1Rod09nQCpd25BrCjmimmF8dbxL3fyRBv", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
+  {name:"Impuls 17 - Lineare Gleichungssysteme lösen", type:"pdf", googleId:"1zuT03IBcVLy3fZehuhJYlPoPvJUIWoxb", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
+  {name:"Impuls 18 - Aufstellen von linearen Gleichungssystemen", type:"pdf", googleId:"1EnOCW8qxi7oO7aVFtne3gNBHbUscQFzp", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
+  {name:"Impuls 19 - Musterprüfungen", type:"pdf", googleId:"1u6lQV-jCGOCCD2UKr0dlcBHp-wUpT0eh", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
+  {name:"Impuls 20 - Geometrie - Volumen und Oberflächeninhalt einer Kugel", type:"pdf", googleId:"12CF1dK1-1m5GCuuSeKIgedhMKobd52im", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
+  {name:"Impuls 21 - Aufgaben zu Volumen und Oberflächeninhalt von Kugeln", type:"pdf", googleId:"1uTKn5jZqk-Osp6Kj2y51S0-oZoDMg2-u", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
+  {name:"Impuls 22 - Geometrie (Kugel) MSA-Aufgaben 2023 und 2024", type:"pdf", googleId:"1uV2hYvykZYAmXm5tzLI5URY4Xld_dslZ", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
+  {name:"Impuls 23 - Zentrische Streckung - Ähnliche Welten", type:"pdf", googleId:"1AV_zWLExA7ZdVPGkXbtfFL-3eDo1mr-Z", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
+  {name:"Impuls 24 - Zentrische Streckung (Flächeninhalt von Bildfiguren, Volumen von Bildkörpern)", type:"pdf", googleId:"170UB-7gmhUUKsgJnLa4AbKSFt-hEgwIl", version:"v1.0", important:false, tags:["Mathe","Klasse 10"], preview:true},
+  {name:"Impuls 25 - Geometrie - Strahlensätze (1)", type:"pdf", googleId:"1gWuJcll1F_yF7UGfPZKiz6lgTQfz_19K", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
+  {name:"Impuls 26 - Geometrie - Strahlensätze (X-Figur) und Anwendung der Strahlensätze", type:"pdf", googleId:"1sZS52r03HinpWe-sLOp5Va3qfleMG5oe", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
+  {name:"Impuls 27 - Geometrie - Satzgruppe des Pythagoras (Katheten- und Höhensatz)", type:"pdf", googleId:"1hsMy7AytPWxa8rLZziCvZpI_GdO-C3aw", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
+  {name:"Impuls 28 - Geometrie - Satz von Thales - Rechteck in flächengleiches Quadrat umwandeln", type:"pdf", googleId:"1Kk9VC_4uoDGeP918JnIe7xzJv5s3l1vc", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
 
 
- {name:"das gehirn (Präsentation 01 NuT)", type:"pdf", googleId:"1MV7LyWB4ARtQOwdW2l23esnqJg1oeDtE", version:"v1.0", important:false, tags:["NuT","Klasse 10","PDF"]},
-
- {name:"So funktioniert unser Gehirn (Präsentation 02 NuT)", type:"pdf", googleId:"1kp8JaRmul384CZcuIg9wSzsMDCADIyqp", version:"v1.0", important:false, tags:["NuT","Klasse 10","PDF"]},
-
- {name:"Nervenzelle (Präsentation 03 NuT)", type:"pdf", googleId:"1KGBGGFlsWVgy5UgOvJurwJHQBUsEdI77", version:"v1.0", important:false, tags:["NuT","Klasse 10","PDF"]},
-
- {name:"Signalübertragung durch Synapse (Präsentation 04 NuT)", type:"pdf", googleId:"1WQlyIXcolO_ZSFncUenprTt0Y54tF3-z", version:"v1.0", important:false, tags:["NuT","Klasse 10","PDF"]},
-
- {name:"Erkrankungen des Nervensytems (Präsentation 05 NuT)", type:"pdf", googleId:"1nHR4C_UmUwGMYvT08czAtc_PyQ0LFHOO", version:"v1.0", important:false, tags:["NuT","Klasse 10","PDF"]},
-
- {name:"Hormone sind Signalstoffe (Präsentation 06 NuT)", type:"pdf", googleId:"18lnTlW2UkgJhp4j2y2vqGf9OPvRR7TKQ", version:"v1.0", important:false, tags:["NuT","Klasse 10","PDF"]},
-
- {name:"Geschlechtshormone und Menstruation (Präsentation 07 NuT)", type:"pdf", googleId:"1J-99iUgCrUgPjAgdsCoIN8-LWMdu_kYB", version:"v1.0", important:false, tags:["NuT","Klasse 10","PDF"]},
-
- {name:"Stress (Präsentation 08 NuT)", type:"pdf", googleId:"1nZB70dCB4-fljcJENJ3eA-NJe9_ue6lX", version:"v1.0", important:false, tags:["NuT","Klasse 10","PDF"]},
-
- {name:"Wachstum_DNA_Cromosom_Mitose (Präsentation 09 NuT)", type:"pdf", googleId:"1WGNoTNfrbTK97Wk2ikRvA5yqLMJYLHdD", version:"v1.0", important:false, tags:["NuT","Klasse 10","PDF"]},
-
- {name:"Meiose (Präsentation 10 NuT)", type:"pdf", googleId:"1CkiU73ia_nhMYaqt-up--Ke4QC_mvT1R", version:"v1.0", important:false, tags:["NuT","Klasse 10","PDF"]},
-
- {name:"Aufbau der DNA (Präsentation 11 NuT)", type:"pdf", googleId:"1O3wcwEimefDuWi9GQ9SllE9tFdm3Jkv7", version:"v1.0", important:false, tags:["NuT","Klasse 10","PDF"]},
+  {name:"Impuls 29 - Geometrie - Wiederholung vor dem Mathetest", type:"pdf", googleId:"1IL9EX-kvv4GvVNewTThCQuSORyoM9har", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
 
 
 
 
+  {name:"Projektprüfung Mappe (Vorlage leer)", type:"doc", googleId:"1ZY8C2G8pJTaIPYN4JIjsvms9sBv-TnGp", version:"v1.0", important:true, tags:["Projektprüfung","Textdokument"], preview:false},
+  {name:"Projektprüfung Präsentation (Vorlage leer)", type:"slides", googleId:"1ZsbD8ONeiFa9GTXQk0_vY-VeCHCaPBcP", version:"v1.0", important:true, tags:["Projektprüfung","Präsentation"], preview:false},
+  {name:"Inhaltsangabe pragmatischer Texte", type:"pdf", googleId:"1NgmdB78YfK-_43Ddkw-wJlB0Wh3-fxxL", version:"v1.0", important:false, tags:["Deutsch","Klasse 10","PDF"], preview:true},
+  {name:"Inhaltsangabe literarischer Texte", type:"pdf", googleId:"1S0uEDpgT0YVV5A0D0nczr7PNNfmgt2iA", version:"v1.0", important:false, tags:["Deutsch","Klasse 10","PDF"], preview:true},
+  {name:"Der innere Monolog", type:"pdf", googleId:"1zQSlF-NYL-H7a9XDwteoFnv8uN5H5Puy", version:"v1.0", important:false, tags:["Deutsch","Klasse 10","PDF"], preview:true},
+  {name:"Der Konjunktiv", type:"pdf", googleId:"1epLQ2gJHIioP001jOS1A8yFr3WsrY1e4", version:"v1.0", important:false, tags:["Deutsch","Klasse 10","PDF"], preview:true},
+  {name:"das gehirn (Präsentation 01 NuT)", type:"pdf", googleId:"1MV7LyWB4ARtQOwdW2l23esnqJg1oeDtE", version:"v1.0", important:false, tags:["NuT","Klasse 10","PDF"], preview:true},
+  {name:"So funktioniert unser Gehirn (Präsentation 02 NuT)", type:"pdf", googleId:"1kp8JaRmul384CZcuIg9wSzsMDCADIyqp", version:"v1.0", important:false, tags:["NuT","Klasse 10","PDF"], preview:true},
+  {name:"Nervenzelle (Präsentation 03 NuT)", type:"pdf", googleId:"1KGBGGFlsWVgy5UgOvJurwJHQBUsEdI77", version:"v1.0", important:false, tags:["NuT","Klasse 10","PDF"], preview:true},
+  {name:"Signalübertragung durch Synapse (Präsentation 04 NuT)", type:"pdf", googleId:"1WQlyIXcolO_ZSFncUenprTt0Y54tF3-z", version:"v1.0", important:false, tags:["NuT","Klasse 10","PDF"], preview:true},
+  {name:"Erkrankungen des Nervensytems (Präsentation 05 NuT)", type:"pdf", googleId:"1nHR4C_UmUwGMYvT08czAtc_PyQ0LFHOO", version:"v1.0", important:false, tags:["NuT","Klasse 10","PDF"], preview:true},
+  {name:"Hormone sind Signalstoffe (Präsentation 06 NuT)", type:"pdf", googleId:"18lnTlW2UkgJhp4j2y2vqGf9OPvRR7TKQ", version:"v1.0", important:false, tags:["NuT","Klasse 10","PDF"], preview:true},
+  {name:"Geschlechtshormone und Menstruation (Präsentation 07 NuT)", type:"pdf", googleId:"1J-99iUgCrUgPjAgdsCoIN8-LWMdu_kYB", version:"v1.0", important:false, tags:["NuT","Klasse 10","PDF"], preview:true},
+  {name:"Stress (Präsentation 08 NuT)", type:"pdf", googleId:"1nZB70dCB4-fljcJENJ3eA-NJe9_ue6lX", version:"v1.0", important:false, tags:["NuT","Klasse 10","PDF"], preview:true},
+  {name:"Wachstum_DNA_Cromosom_Mitose (Präsentation 09 NuT)", type:"pdf", googleId:"1WGNoTNfrbTK97Wk2ikRvA5yqLMJYLHdD", version:"v1.0", important:false, tags:["NuT","Klasse 10","PDF"], preview:true},
+  {name:"Meiose (Präsentation 10 NuT)", type:"pdf", googleId:"1CkiU73ia_nhMYaqt-up--Ke4QC_mvT1R", version:"v1.0", important:false, tags:["NuT","Klasse 10","PDF"], preview:true},
+  {name:"Aufbau der DNA (Präsentation 11 NuT)", type:"pdf", googleId:"1O3wcwEimefDuWi9GQ9SllE9tFdm3Jkv7", version:"v1.0", important:false, tags:["NuT","Klasse 10","PDF"], preview:true},
 ];
 
 let customFiles=JSON.parse(localStorage.getItem("files"))||[];
@@ -303,8 +310,8 @@ document.getElementById("stats").innerText=`📊 Downloads gesamt: ${downloads}`
 function getLinks(file){
   if(file.type==="doc") return {view:`https://docs.google.com/document/d/${file.googleId}/preview`, download:`https://docs.google.com/document/d/${file.googleId}/export?format=pdf`};
   if(file.type==="slides") return {view:`https://docs.google.com/presentation/d/${file.googleId}/preview`, download:`https://docs.google.com/presentation/d/${file.googleId}/export/pdf`};
-  if(file.type==="pdf") return {view:`https://drive.google.com/file/d/${file.googleId}/preview`, download:`https://drive.google.com/uc?export=download&id=${file.googleId}`
-};  if(file.type==="youtube") return {
+  if(file.type==="pdf") return {view:`https://drive.google.com/file/d/${file.googleId}/preview`, download:`https://drive.google.com/uc?export=download&id=${file.googleId}`};
+  if(file.type==="youtube") return {
     view:`https://www.youtube.com/embed/${file.googleId}`,
     download:`https://www.youtube.com/watch?v=${file.googleId}`
   };
@@ -334,17 +341,20 @@ function renderFiles(){
     const links=getLinks(file);
     const downloaded=Number(localStorage.getItem("downloaded_"+file.googleId))||0;
     const tagsStr=file.tags.join(", ");
+    const hasPreview = file.preview === true;
+    
     list.innerHTML+=`
       <div class="file" data-title="${file.name.toLowerCase()}" data-tags="${file.tags.join(",").toLowerCase()}">
         <strong>${file.name}</strong> ${file.important?"🔥":""}
-        <div class="info">${file.version} | Tags: ${tagsStr} | Downloads: ${downloaded}</div>
+        <div class="info">${file.version} | Tags: ${tagsStr} | Downloads: ${downloaded} ${hasPreview ? '| 👁️ Vorschau verfügbar' : ''}</div>
         <div class="buttons">
           <a class="view" href="${links.view}" target="_blank">Ansicht</a>
           <a class="download" href="${links.download}" onclick="count('${file.googleId}')">Download</a>
+          ${hasPreview ? `<button class="preview-btn" onclick="togglePreview(this, '${file.googleId}')">👁️ Vorschau zeigen</button>` : ''}
           <label class="checkbox"><input type="checkbox" onclick="toggleDownloaded('${file.googleId}')" ${downloaded>0?"checked":""}> Hab ich geladen</label>
           ${isAdmin?`<button onclick="deleteFile(${index})">🗑️</button>`:""}
         </div>
-        <iframe src="${links.view}"></iframe>
+        ${hasPreview ? `<iframe class="preview-frame" src="${links.view}" data-has-preview="true"></iframe>` : ''}
       </div>`;
   });
 }
@@ -365,6 +375,7 @@ function addFile(){
   const link=document.getElementById("gid").value.trim();
   const type=document.getElementById("ftype").value;
   const tags=document.getElementById("ftags").value.split(",").map(t=>t.trim()).filter(t=>t);
+  const preview=document.getElementById("fpreview").checked;
 
   if(!name || !link){
     alert("Bitte Name und Link eingeben!");
@@ -375,21 +386,22 @@ function addFile(){
   if(!idMatch){ alert("Ungültiger Google Drive Link!"); return; }
   const fileId = idMatch[1];
 
-  customFiles.push({name,type,googleId:fileId,version:"v1.0",important:false,tags});
+  customFiles.push({name,type,googleId:fileId,version:"v1.0",important:false,tags,preview});
   saveFiles();
   renderFiles();
   document.getElementById("fname").value="";
   document.getElementById("gid").value="";
   document.getElementById("ftags").value="";
+  document.getElementById("fpreview").checked = false;
 }
 
 // Tabelle & CSV
 function showTable(){
   const allFiles=[...defaultFiles,...customFiles];
-  let html="<table><tr><th>Name</th><th>Typ</th><th>Version</th><th>Tags</th><th>Downloads</th></tr>";
+  let html="<table><tr><th>Name</th><th>Typ</th><th>Version</th><th>Tags</th><th>Downloads</th><th>Vorschau</th></tr>";
   allFiles.forEach(f=>{
     const d=Number(localStorage.getItem("downloaded_"+f.googleId))||0;
-    html+=`<tr><td>${f.name}</td><td>${f.type}</td><td>${f.version}</td><td>${f.tags.join(", ")}</td><td>${d}</td></tr>`;
+    html+=`<tr><td>${f.name}</td><td>${f.type}</td><td>${f.version}</td><td>${f.tags.join(", ")}</td><td>${d}</td><td>${f.preview ? '✅' : '❌'}</td></tr>`;
   });
   html+="</table>";
   document.getElementById("fileTableContainer").innerHTML=html;
@@ -397,10 +409,10 @@ function showTable(){
 
 function exportCSV(){
   const allFiles=[...defaultFiles,...customFiles];
-  let csv="Name,Typ,Version,Tags,Downloads\n";
+  let csv="Name,Typ,Version,Tags,Downloads,Vorschau\n";
   allFiles.forEach(f=>{
     const d=Number(localStorage.getItem("downloaded_"+f.googleId))||0;
-    csv+=`"${f.name}","${f.type}","${f.version}","${f.tags.join(", ")}","${d}"\n`;
+    csv+=`"${f.name}","${f.type}","${f.version}","${f.tags.join(", ")}","${d}","${f.preview ? 'Ja' : 'Nein'}"\n`;
   });
   const blob=new Blob([csv],{type:"text/csv"});
   const url=URL.createObjectURL(blob);
@@ -426,8 +438,6 @@ function deleteAllLocalFiles(){
   alert("✅ Alle lokalen Dateien wurden gelöscht.");
   renderFiles();
 }
-
-
 
 </script>
 
@@ -533,12 +543,6 @@ document.addEventListener("keydown", e=>{
 });
 
 </script>
-
-
-
-
-
-
 
 </body>
 </html>
