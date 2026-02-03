@@ -39,6 +39,8 @@ button { cursor:pointer; font-weight:bold; background: var(--accent); color:#000
 .file .buttons a.download { background: var(--accent); color:#000; }
 .file .checkbox { margin-left:10px; cursor:pointer; }
 #adminPanel { display:none; margin-top:20px; background:#1a1a1a; padding:15px; border-radius:12px; }
+
+/* Vorschau-Frames */
 .preview-frame { 
   width:100%; 
   height:450px; 
@@ -49,6 +51,44 @@ button { cursor:pointer; font-weight:bold; background: var(--accent); color:#000
 }
 .preview-frame.show { 
   display: block; 
+}
+
+/* MP3 Player */
+.audio-player {
+  background: #2a2a2a;
+  border-radius: 12px;
+  padding: 15px;
+  margin-top: 10px;
+  display: none;
+}
+.audio-player.show {
+  display: block;
+}
+.audio-player audio {
+  width: 100%;
+  margin-bottom: 10px;
+}
+.player-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.play-btn, .pause-btn {
+  background: var(--accent);
+  color: #000;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+}
+.time-display {
+  font-size: 12px;
+  color: #aaa;
+}
+.volume-slider {
+  width: 100px;
 }
 
 /* Settings Panel */
@@ -63,6 +103,26 @@ button { cursor:pointer; font-weight:bold; background: var(--accent); color:#000
 table { width:100%; border-collapse:collapse; margin-top:15px; border-radius:10px; overflow:hidden; }
 th, td { padding:10px; border:1px solid var(--accent); text-align:left; }
 th { background:var(--accent); color:#000; }
+
+/* Filter-Buttons */
+.filter-buttons {
+  display: flex;
+  gap: 10px;
+  margin: 15px 0;
+  flex-wrap: wrap;
+}
+.filter-btn {
+  background: #333;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.filter-btn.active {
+  background: var(--accent);
+  color: #000;
+}
 </style>
 </head>
 <body>
@@ -93,12 +153,23 @@ th { background:var(--accent); color:#000; }
   <button onclick="toggleTheme()">Dark/Light</button>
 </div>
 
-<div class="update">🔔 Version 0.5.5 + Stabilere Verbindung</div>
+<div class="update">🔔 Version 0.6 + MP3 Player</div>
 
 <h1>📂 Prüfungsvorbereitung</h1>
 <p id="stats">📊 Downloads gesamt: 512</p>
 
 <input id="search" placeholder="🔍 Datei suchen …">
+
+<div class="filter-buttons">
+  <button class="filter-btn active" onclick="filterByType('all')">Alle</button>
+  <button class="filter-btn" onclick="filterByType('pdf')">📄 PDF</button>
+  <button class="filter-btn" onclick="filterByType('doc')">📝 Dokumente</button>
+  <button class="filter-btn" onclick="filterByType('slides')">📊 Präsentationen</button>
+  <button class="filter-btn" onclick="filterByType('mp3')">🎵 Audio</button>
+</div>
+  <button class="filter-btn" onclick="filterByType('youtube')">🎬 YouTube</button>
+</div>
+
 <button onclick="toggleAllPreviews()" style="margin-bottom:20px;">👁️ Alle Vorschauen an/aus</button>
 
 <div class="tags" id="tagContainer"></div>
@@ -113,11 +184,13 @@ th { background:var(--accent); color:#000; }
 <div id="adminPanel">
 <h3>➕ Neue Datei hinzufügen</h3>
 <input id="fname" placeholder="Dateiname">
-<input id="gid" placeholder="Google Drive Link">
+<input id="gid" placeholder="Google Drive Link oder YouTube ID">
 <select id="ftype">
   <option value="doc">Textdokument</option>
   <option value="slides">Präsentation</option>
   <option value="pdf">PDF</option>
+  <option value="mp3">Audio (MP3)</option>
+  <option value="youtube">YouTube Video</option>
 </select>
 <input id="ftags" placeholder="Tags durch Komma trennen">
 <label style="display:flex; align-items:center; gap:10px; margin-top:10px;">
@@ -211,43 +284,120 @@ loadStyle();
 
 // Vorschau umschalten
 function togglePreview(button, fileId) {
-  const frame = button.parentElement.parentElement.querySelector('.preview-frame');
-  const hasPreview = frame.getAttribute('data-has-preview') === 'true';
+  const container = button.parentElement.parentElement;
+  const previewFrame = container.querySelector('.preview-frame');
+  const audioPlayer = container.querySelector('.audio-player');
   
-  if (!hasPreview) {
-    alert('Diese Datei hat keine Vorschau aktiviert.');
-    return;
+  if (previewFrame) {
+    previewFrame.classList.toggle('show');
+    button.textContent = previewFrame.classList.contains('show') ? '👁️ Vorschau verstecken' : '👁️ Vorschau zeigen';
   }
   
-  frame.classList.toggle('show');
-  button.textContent = frame.classList.contains('show') ? '👁️ Vorschau verstecken' : '👁️ Vorschau zeigen';
+  if (audioPlayer) {
+    audioPlayer.classList.toggle('show');
+    button.textContent = audioPlayer.classList.contains('show') ? '🎵 Player verstecken' : '🎵 Player anzeigen';
+    
+    // Wenn Player geschlossen wird, pausiere Audio
+    if (!audioPlayer.classList.contains('show')) {
+      const audio = audioPlayer.querySelector('audio');
+      if (audio) {
+        audio.pause();
+        const playBtn = audioPlayer.querySelector('.play-btn');
+        if (playBtn) playBtn.textContent = '▶️ Abspielen';
+      }
+    }
+  }
 }
 
 // Alle Vorschauen umschalten
 function toggleAllPreviews() {
-  const frames = document.querySelectorAll('.preview-frame[data-has-preview="true"]');
+  const frames = document.querySelectorAll('.preview-frame');
+  const players = document.querySelectorAll('.audio-player');
   const buttons = document.querySelectorAll('.preview-btn');
   
-  if (frames.length === 0) return;
+  const allElements = [...frames, ...players];
+  if (allElements.length === 0) return;
   
-  const showAll = !frames[0].classList.contains('show');
+  const showAll = !allElements[0].classList.contains('show');
   
-  frames.forEach(frame => {
+  allElements.forEach(element => {
     if (showAll) {
-      frame.classList.add('show');
+      element.classList.add('show');
     } else {
-      frame.classList.remove('show');
+      element.classList.remove('show');
+      // Audio pausieren wenn geschlossen
+      if (element.classList.contains('audio-player')) {
+        const audio = element.querySelector('audio');
+        if (audio) audio.pause();
+      }
     }
   });
   
   buttons.forEach(btn => {
-    if (btn.parentElement.parentElement.querySelector('.preview-frame').getAttribute('data-has-preview') === 'true') {
-      btn.textContent = showAll ? '👁️ Vorschau verstecken' : '👁️ Vorschau zeigen';
+    const container = btn.parentElement.parentElement;
+    const hasPreview = container.querySelector('.preview-frame') || container.querySelector('.audio-player');
+    if (hasPreview) {
+      btn.textContent = showAll ? 
+        (container.querySelector('.audio-player') ? '🎵 Player verstecken' : '👁️ Vorschau verstecken') : 
+        (container.querySelector('.audio-player') ? '🎵 Player anzeigen' : '👁️ Vorschau zeigen');
     }
   });
 }
 
-// Dateien numerisch sortiert
+// Audio Player Funktionen
+function toggleAudio(button) {
+  const audio = button.parentElement.querySelector('audio');
+  if (audio.paused) {
+    audio.play();
+    button.textContent = '⏸️ Pause';
+  } else {
+    audio.pause();
+    button.textContent = '▶️ Abspielen';
+  }
+}
+
+function updateTime(audioElement) {
+  const container = audioElement.closest('.audio-player');
+  const timeDisplay = container.querySelector('.time-display');
+  if (timeDisplay) {
+    const current = formatTime(audioElement.currentTime);
+    const duration = formatTime(audioElement.duration || 0);
+    timeDisplay.textContent = `${current} / ${duration}`;
+  }
+}
+
+function formatTime(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+}
+
+function changeVolume(slider, audioId) {
+  const audio = document.getElementById(audioId);
+  if (audio) audio.volume = slider.value;
+}
+
+// Filter nach Dateityp
+function filterByType(type) {
+  // Filter-Buttons aktualisieren
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  event.target.classList.add('active');
+  
+  // Dateien filtern
+  const files = document.querySelectorAll('.file');
+  files.forEach(file => {
+    const fileType = file.dataset.type || '';
+    if (type === 'all' || fileType === type) {
+      file.style.display = 'block';
+    } else {
+      file.style.display = 'none';
+    }
+  });
+}
+
+// Dateien
 let defaultFiles=[
   {name:"Impuls 1 - Potenzen und Wurzeln", type:"pdf", googleId:"1K3fuoW8fUEJKSF40SV1prjVcgiEYk9Q-", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
   {name:"Impuls 2 - Potenzen und Wurzeln", type:"pdf", googleId:"1jQPdxk7zcjjqKNGCtMIwA0GF-V0WigUA", version:"v1.0", important:false, tags:["Mathe","Klasse 10","PDF"], preview:true},
@@ -284,8 +434,8 @@ let defaultFiles=[
 
 
 
-  {name:"Projektprüfung Mappe (Vorlage leer)", type:"doc", googleId:"1ZY8C2G8pJTaIPYN4JIjsvms9sBv-TnGp", version:"v1.0", important:true, tags:["Projektprüfung","Textdokument"], preview:false},
-  {name:"Projektprüfung Präsentation (Vorlage leer)", type:"slides", googleId:"1ZsbD8ONeiFa9GTXQk0_vY-VeCHCaPBcP", version:"v1.0", important:true, tags:["Projektprüfung","Präsentation"], preview:false},
+  {name:"Projektprüfung Mappe (Vorlage leer)", type:"doc", googleId:"1ZY8C2G8pJTaIPYN4JIjsvms9sBv-TnGp", version:"v1.0", important:true, tags:["Projektprüfung","Textdokument"], preview:true},
+  {name:"Projektprüfung Präsentation (Vorlage leer)", type:"slides", googleId:"1ZsbD8ONeiFa9GTXQk0_vY-VeCHCaPBcP", version:"v1.0", important:true, tags:["Projektprüfung","Präsentation"], preview:true},
   {name:"Inhaltsangabe pragmatischer Texte", type:"pdf", googleId:"1NgmdB78YfK-_43Ddkw-wJlB0Wh3-fxxL", version:"v1.0", important:false, tags:["Deutsch","Klasse 10","PDF"], preview:true},
   {name:"Inhaltsangabe literarischer Texte", type:"pdf", googleId:"1S0uEDpgT0YVV5A0D0nczr7PNNfmgt2iA", version:"v1.0", important:false, tags:["Deutsch","Klasse 10","PDF"], preview:true},
   {name:"Der innere Monolog", type:"pdf", googleId:"1zQSlF-NYL-H7a9XDwteoFnv8uN5H5Puy", version:"v1.0", important:false, tags:["Deutsch","Klasse 10","PDF"], preview:true},
@@ -301,6 +451,13 @@ let defaultFiles=[
   {name:"Wachstum_DNA_Cromosom_Mitose (Präsentation 09 NuT)", type:"pdf", googleId:"1WGNoTNfrbTK97Wk2ikRvA5yqLMJYLHdD", version:"v1.0", important:false, tags:["NuT","Klasse 10","PDF"], preview:true},
   {name:"Meiose (Präsentation 10 NuT)", type:"pdf", googleId:"1CkiU73ia_nhMYaqt-up--Ke4QC_mvT1R", version:"v1.0", important:false, tags:["NuT","Klasse 10","PDF"], preview:true},
   {name:"Aufbau der DNA (Präsentation 11 NuT)", type:"pdf", googleId:"1O3wcwEimefDuWi9GQ9SllE9tFdm3Jkv7", version:"v1.0", important:false, tags:["NuT","Klasse 10","PDF"], preview:true},
+
+  {name:"test", type:"mp3", googleId:"1qVzvmSAYrVz0bdAhQd8SDfB5PeXt2bo_", version:"v1.0", important:false, tags:["Audio"], preview:true},
+  
+  
+  {name:"Zivilrecht, Strafrecht oder Verwaltungsrecht", type:"youtube", googleId:"vFq97jn48V8", version:"v1.0", important:false, tags:["WiB","Klasse 10","Video"], preview:true},
+  
+  
 ];
 
 let customFiles=JSON.parse(localStorage.getItem("files"))||[];
@@ -308,14 +465,29 @@ let downloads=Number(localStorage.getItem("downloads"))||0;
 document.getElementById("stats").innerText=`📊 Downloads gesamt: ${downloads}`;
 
 function getLinks(file){
-  if(file.type==="doc") return {view:`https://docs.google.com/document/d/${file.googleId}/preview`, download:`https://docs.google.com/document/d/${file.googleId}/export?format=pdf`};
-  if(file.type==="slides") return {view:`https://docs.google.com/presentation/d/${file.googleId}/preview`, download:`https://docs.google.com/presentation/d/${file.googleId}/export/pdf`};
-  if(file.type==="pdf") return {view:`https://drive.google.com/file/d/${file.googleId}/preview`, download:`https://drive.google.com/uc?export=download&id=${file.googleId}`};
+  if(file.type==="doc") return {
+    view:`https://docs.google.com/document/d/${file.googleId}/preview`, 
+    download:`https://docs.google.com/document/d/${file.googleId}/export?format=pdf`
+  };
+  if(file.type==="slides") return {
+    view:`https://docs.google.com/presentation/d/${file.googleId}/preview`, 
+    download:`https://docs.google.com/presentation/d/${file.googleId}/export/pdf`
+  };
+  if(file.type==="pdf") return {
+    view:`https://drive.google.com/file/d/${file.googleId}/preview`, 
+    download:`https://drive.google.com/uc?export=download&id=${file.googleId}`
+  };
+  if(file.type==="mp3") return {
+    view:`https://drive.google.com/file/d/${file.googleId}/preview`, 
+    download:`https://drive.google.com/uc?export=download&id=${file.googleId}`,
+    audio:`https://drive.google.com/uc?export=download&id=${file.googleId}`
+  };
   if(file.type==="youtube") return {
     view:`https://www.youtube.com/embed/${file.googleId}`,
     download:`https://www.youtube.com/watch?v=${file.googleId}`
   };
 }
+
 function saveFiles(){ localStorage.setItem("files",JSON.stringify(customFiles)); }
 
 function renderFiles(){
@@ -342,28 +514,90 @@ function renderFiles(){
     const downloaded=Number(localStorage.getItem("downloaded_"+file.googleId))||0;
     const tagsStr=file.tags.join(", ");
     const hasPreview = file.preview === true;
+    const audioId = 'audio-' + file.googleId;
     
     list.innerHTML+=`
-      <div class="file" data-title="${file.name.toLowerCase()}" data-tags="${file.tags.join(",").toLowerCase()}">
+      <div class="file" data-title="${file.name.toLowerCase()}" data-tags="${file.tags.join(",").toLowerCase()}" data-type="${file.type}">
         <strong>${file.name}</strong> ${file.important?"🔥":""}
-        <div class="info">${file.version} | Tags: ${tagsStr} | Downloads: ${downloaded} ${hasPreview ? '| 👁️ Vorschau verfügbar' : ''}</div>
+        <div class="info">
+          ${getTypeIcon(file.type)} ${file.version} | 
+          Tags: ${tagsStr} | 
+          Downloads: ${downloaded} 
+          ${hasPreview ? '| 👁️ Vorschau verfügbar' : ''}
+        </div>
         <div class="buttons">
-          <a class="view" href="${links.view}" target="_blank">Ansicht</a>
-          <a class="download" href="${links.download}" onclick="count('${file.googleId}')">Download</a>
-          ${hasPreview ? `<button class="preview-btn" onclick="togglePreview(this, '${file.googleId}')">👁️ Vorschau zeigen</button>` : ''}
+          <a class="view" href="${file.type === 'mp3' ? '#' : links.view}" 
+             ${file.type === 'mp3' ? 'onclick="return false;"' : 'target="_blank"'} 
+             style="${file.type === 'mp3' ? 'opacity:0.5; cursor:default;"' : ''}">
+            ${file.type === 'mp3' ? '🔊' : '👁️'} Ansicht
+          </a>
+          <a class="download" href="${links.download}" onclick="count('${file.googleId}')">📥 Download</a>
+          ${hasPreview ? `<button class="preview-btn" onclick="togglePreview(this, '${file.googleId}')">
+            ${file.type === 'mp3' ? '🎵 Player anzeigen' : '👁️ Vorschau zeigen'}
+          </button>` : ''}
           <label class="checkbox"><input type="checkbox" onclick="toggleDownloaded('${file.googleId}')" ${downloaded>0?"checked":""}> Hab ich geladen</label>
           ${isAdmin?`<button onclick="deleteFile(${index})">🗑️</button>`:""}
         </div>
-        ${hasPreview ? `<iframe class="preview-frame" src="${links.view}" data-has-preview="true"></iframe>` : ''}
+        ${file.type === 'mp3' && hasPreview ? `
+          <div class="audio-player" id="player-${file.googleId}">
+            <audio id="${audioId}" ontimeupdate="updateTime(this)" 
+                   src="${links.audio}" preload="metadata"></audio>
+            <div class="player-controls">
+              <button class="play-btn" onclick="toggleAudio(this)">▶️ Abspielen</button>
+              <span class="time-display">0:00 / 0:00</span>
+              <input type="range" min="0" max="1" step="0.1" value="1" 
+                     class="volume-slider" 
+                     onchange="changeVolume(this, '${audioId}')">
+            </div>
+          </div>
+        ` : ''}
+        ${(file.type === 'pdf' || file.type === 'doc' || file.type === 'slides' || file.type === 'youtube') && hasPreview ? 
+          `<iframe class="preview-frame" src="${links.view}" data-has-preview="true"></iframe>` : ''}
       </div>`;
   });
+}
+
+function getTypeIcon(type) {
+  const icons = {
+    'pdf': '📄',
+    'doc': '📝',
+    'slides': '📊',
+    'mp3': '🎵',
+    'youtube': '🎬'
+  };
+  return icons[type] || '📁';
 }
 
 // Download-Zähler
 function count(gid){ downloads++; localStorage.setItem("downloads",downloads); localStorage.setItem("downloaded_"+gid,Number(localStorage.getItem("downloaded_"+gid)||0)+1); document.getElementById("stats").innerText=`📊 Downloads gesamt: ${downloads}`; renderFiles(); }
 function toggleDownloaded(gid){ const key="downloaded_"+gid; localStorage.setItem(key,!JSON.parse(localStorage.getItem(key))); renderFiles(); }
-document.getElementById("search").oninput=()=>{ const v=document.getElementById("search").value.toLowerCase(); document.querySelectorAll(".file").forEach(f=>f.style.display=f.dataset.title.includes(v)?"block":"none");}
-function filterByTag(tag,element){ document.querySelectorAll(".tag").forEach(x=>x.classList.remove("active")); element.classList.add("active"); document.querySelectorAll(".file").forEach(f=>f.style.display=(tag==="all"||f.dataset.tags.includes(tag.toLowerCase()))?"block":"none");}
+document.getElementById("search").oninput=()=>{ 
+  const v=document.getElementById("search").value.toLowerCase(); 
+  document.querySelectorAll(".file").forEach(f=>{
+    const matchesSearch = f.dataset.title.includes(v);
+    const fileType = f.dataset.type;
+    const isFiltered = document.querySelector('.filter-btn.active').textContent;
+    
+    let shouldShow = matchesSearch;
+    if (isFiltered !== 'Alle') {
+      const filterType = isFiltered.includes('PDF') ? 'pdf' : 
+                        isFiltered.includes('Dokumente') ? 'doc' :
+                        isFiltered.includes('Präsentationen') ? 'slides' :
+                        isFiltered.includes('Audio') ? 'mp3' : 'all';
+      shouldShow = shouldShow && (filterType === 'all' || fileType === filterType);
+    }
+    
+    f.style.display = shouldShow ? "block" : "none";
+  });
+}
+
+function filterByTag(tag,element){ 
+  document.querySelectorAll(".tag").forEach(x=>x.classList.remove("active")); 
+  element.classList.add("active"); 
+  document.querySelectorAll(".file").forEach(f=>{
+    f.style.display=(tag==="all"||f.dataset.tags.includes(tag.toLowerCase()))?"block":"none";
+  });
+}
 
 // Admin
 function login(){ const u=prompt("Admin Name:"); const p=prompt("Passwort:"); if(u===ADMIN_USER && p===ADMIN_PASS){ localStorage.setItem("isAdmin","true"); document.getElementById("adminPanel").style.display="block"; renderFiles(); alert("Admin aktiv");} else alert("Falsch!"); }
@@ -382,9 +616,33 @@ function addFile(){
     return;
   }
 
-  let idMatch = link.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  if(!idMatch){ alert("Ungültiger Google Drive Link!"); return; }
-  const fileId = idMatch[1];
+  let fileId;
+  if (type === 'youtube') {
+    // YouTube ID extrahieren
+    const youtubeMatch = link.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    if (youtubeMatch) {
+      fileId = youtubeMatch[1];
+    } else if (link.length === 11) {
+      fileId = link; // Direkte YouTube ID
+    } else {
+      alert("Ungültiger YouTube Link!");
+      return;
+    }
+  } else {
+    // Google Drive Link
+    let idMatch = link.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if(!idMatch){ 
+      // Vielleicht direkte ID?
+      if(link.match(/^[a-zA-Z0-9_-]{20,}$/)) {
+        fileId = link;
+      } else {
+        alert("Ungültiger Google Drive Link!");
+        return;
+      }
+    } else {
+      fileId = idMatch[1];
+    }
+  }
 
   customFiles.push({name,type,googleId:fileId,version:"v1.0",important:false,tags,preview});
   saveFiles();
@@ -398,10 +656,10 @@ function addFile(){
 // Tabelle & CSV
 function showTable(){
   const allFiles=[...defaultFiles,...customFiles];
-  let html="<table><tr><th>Name</th><th>Typ</th><th>Version</th><th>Tags</th><th>Downloads</th><th>Vorschau</th></tr>";
+  let html="<table><tr><th>Typ</th><th>Name</th><th>Version</th><th>Tags</th><th>Downloads</th><th>Vorschau</th></tr>";
   allFiles.forEach(f=>{
     const d=Number(localStorage.getItem("downloaded_"+f.googleId))||0;
-    html+=`<tr><td>${f.name}</td><td>${f.type}</td><td>${f.version}</td><td>${f.tags.join(", ")}</td><td>${d}</td><td>${f.preview ? '✅' : '❌'}</td></tr>`;
+    html+=`<tr><td>${getTypeIcon(f.type)} ${f.type}</td><td>${f.name}</td><td>${f.version}</td><td>${f.tags.join(", ")}</td><td>${d}</td><td>${f.preview ? '✅' : '❌'}</td></tr>`;
   });
   html+="</table>";
   document.getElementById("fileTableContainer").innerHTML=html;
@@ -409,10 +667,10 @@ function showTable(){
 
 function exportCSV(){
   const allFiles=[...defaultFiles,...customFiles];
-  let csv="Name,Typ,Version,Tags,Downloads,Vorschau\n";
+  let csv="Typ,Name,Version,Tags,Downloads,Vorschau\n";
   allFiles.forEach(f=>{
     const d=Number(localStorage.getItem("downloaded_"+f.googleId))||0;
-    csv+=`"${f.name}","${f.type}","${f.version}","${f.tags.join(", ")}","${d}","${f.preview ? 'Ja' : 'Nein'}"\n`;
+    csv+=`"${f.type}","${f.name}","${f.version}","${f.tags.join(", ")}","${d}","${f.preview ? 'Ja' : 'Nein'}"\n`;
   });
   const blob=new Blob([csv],{type:"text/csv"});
   const url=URL.createObjectURL(blob);
