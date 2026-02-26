@@ -1,4 +1,161 @@
-<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>Prüfungsvorbereitung Portal</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>:root{--accent:#ff2d2d;--bg:#0f0f0f;--card:#1e1e1e;--text:#fff;--font:"Arial",sans-serif;--fontsize:15px}body{margin:0;font-family:var(--font);font-size:var(--fontsize);background:var(--bg);color:var(--text);padding:20px;padding-bottom:220px}h1{margin-bottom:10px}.update{background:var(--accent);color:#000;padding:12px;border-radius:12px;margin-bottom:15px;font-weight:700;text-align:center}input,select,button{padding:10px;border-radius:10px;border:none;font-size:var(--fontsize)}button{cursor:pointer;font-weight:700;background:var(--accent);color:#000}.tags{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}.tag{background:#2a2a2a;padding:6px 14px;border-radius:20px;cursor:pointer}.tag.active{background:var(--accent);color:#000}.file{background:var(--card);padding:15px;border-radius:14px;margin-bottom:25px}.file strong{font-size:18px;display:block;margin-bottom:5px}.file .info{font-size:13px;color:#aaa;margin-bottom:8px}.file .buttons{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;align-items:center}.file .buttons a,.file .buttons button{text-decoration:none;padding:8px 14px;border-radius:10px;font-weight:700;cursor:pointer}.file .buttons a.view{background:#333;color:#fff}.file .buttons a.download{background:var(--accent);color:#000}.preview-frame{width:100%;height:450px;border-radius:12px;border:none;margin-top:10px;display:none}.preview-frame.show{display:block}.audio-player{background:#2a2a2a;border-radius:12px;padding:15px;margin-top:10px;display:none}.audio-player.show{display:block}.audio-player audio{width:100%;margin-bottom:10px}.filter-buttons{display:flex;gap:10px;margin:15px 0;flex-wrap:wrap}.filter-btn{background:#333;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer}.filter-btn.active{background:var(--accent);color:#000}#settingsPanel{margin-bottom:20px;background:#1a1a1a;padding:15px;border-radius:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.sticky{position:fixed;bottom:0;left:0;width:100%;background:#141414;padding:15px;border-top:2px solid var(--accent);display:flex;justify-content:space-around;flex-wrap:wrap;gap:10px;z-index:999}.pi-button{position:fixed;bottom:90px;right:20px;width:60px;height:60px;background:linear-gradient(135deg,#ff2d2d,#ff6b6b);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;cursor:pointer;z-index:1000;box-shadow:0 4px 15px rgba(255,45,45,.4);text-decoration:none;transition:.3s;border:2px solid #fff}.pi-button:hover{transform:scale(1.1);box-shadow:0 6px 20px rgba(255,45,45,.6);background:linear-gradient(135deg,#ff6b6b,#ff2d2d)}.pi-button:active{transform:scale(.95)}</style></head><body><a href="https://montessoriregensburg.github.io/pi" target="_blank" class="pi-button" title="Zur Pi-Website">π</a><div id="settingsPanel"><label>Hintergrund <input type="color" id="bgColor" value="#0f0f0f"></label><label>Textfarbe <input type="color" id="textColor" value="#ffffff"></label><label>Akzentfarbe <input type="color" id="accentColor" value="#ff2d2d"></label><label>Schriftart <select id="fontSelect"><option value="Arial, sans-serif">Arial</option><option value="Verdana, sans-serif">Verdana</option><option value="Courier New, monospace">Courier New</option><option value="Georgia, serif">Georgia</option></select></label><label>Schriftgröße <input type="number" id="fontSize" value="15" min="10" max="30">px</label><select id="presetDesigns"><option value="0">Standard (Dunkel/Rot)</option><option value="1">Hell/Blau</option><option value="2">Grün/Schwarz</option><option value="3">Violett/Dunkel</option></select><button onclick="toggleTheme()">Dark/Light</button></div><div class="update">🔔 Version 0.7 mit Pi-Link</div><h1>📂 Prüfungsvorbereitung</h1><p id="stats">📊 Downloads gesamt: 0</p><input id="search" placeholder="🔍 Datei suchen …"><div class="filter-buttons"><button class="filter-btn active" onclick="filterByType('all')">Alle</button><button class="filter-btn" onclick="filterByType('pdf')">📄 PDF</button><button class="filter-btn" onclick="filterByType('doc')">📝 Dokumente</button><button class="filter-btn" onclick="filterByType('slides')">📊 Präsentationen</button><button class="filter-btn" onclick="filterByType('mp3')">🎵 Audio</button><button class="filter-btn" onclick="filterByType('youtube')">🎬 YouTube</button></div><button onclick="toggleAllPreviews()" style="margin-bottom:20px;">👁️ Alle Vorschauen an/aus</button><div class="tags" id="tagContainer"></div><div id="fileList"></div><button onclick="login()">Admin Login</button> <button onclick="logout()">Logout</button><div id="adminPanel" style="display:none;"><h3>➕ Neue Datei</h3><input id="fname" placeholder="Dateiname"> <input id="gid" placeholder="Google Drive Link oder YouTube ID"> <select id="ftype"><option value="doc">Textdokument</option><option value="slides">Präsentation</option><option value="pdf">PDF</option><option value="mp3">Audio</option><option value="youtube">YouTube</option></select> <input id="ftags" placeholder="Tags"> <label><input type="checkbox" id="fpreview"> Vorschau</label> <button onclick="addFile()">➕ Hinzufügen</button></div><div class="sticky"><button onclick="alert('ZIP-Download benötigt Server')">📦 ZIP</button> <button onclick="login()">🔒 Admin</button> <button onclick="window.scrollTo({top:0,behavior:'smooth'})">⬆️ Top</button></div><script>const defaultFiles=[{name:"Impuls 1 - Potenzen und Wurzeln",type:"pdf",googleId:"1K3fuoW8fUEJKSF40SV1prjVcgiEYk9Q-",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 2 - Potenzen und Wurzeln",type:"pdf",googleId:"1jQPdxk7zcjjqKNGCtMIwA0GF-V0WigUA",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 3 - Potenzen und Wurzeln",type:"pdf",googleId:"1sbbDAcAOrREqA4ygLzgSBPBlNy8oT1xZ",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 4 - Wiederholung Potenzrechnung - Exponentielles Wachstum",type:"pdf",googleId:"1BVSIkECgQVE4Sn_d6Ljwr2EYvIgGIIaY",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 5 - Exponentielle Wachstumsprozesse von linearem Wachstum abgrenzen",type:"pdf",googleId:"1S9abXjtsaZr-8ikRX5nL0FiTOwQne8ZY",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 6 - exponentielles Kapitalwachstum und Zu- und Abnahmen bei der Bevölkerung...",type:"pdf",googleId:"1usqDNOjMydGuKFR5y-mWqaBhD9IIWXi_",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 7 - Berechnung von Größen beim radioaktiven Zerfall",type:"pdf",googleId:"1GbpRQUrvkF-KsFg-6yFwLw5VWlKOmczI",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 8 - Lösen von Aufgaben zum Üben für den Test nächste Woche",type:"pdf",googleId:"1OIM0SGGuAeMzClG71Kh068CzBnHZAlGb",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 9 - Aufgaben zum Üben für den Test (Abschlussrunde)",type:"pdf",googleId:"1FH3RjOvTLgqyw-QyzMN89iBCkc8ZuV41",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 10 - Einführung lineare Funktionen",type:"pdf",googleId:"1ACk6HMmUhfx8x5OonpgERVdpv26I8hiF",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 11 - Zeichnen von linearen Funktionen - Aufstellen von Funktionsgleichungen (1. Fall)",type:"pdf",googleId:"1obkEpA9Le16leqjp6G1OBNFPgTfOioUp",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 12 - Aufstellen von Funktionsgleichungen (2. Fall)",type:"pdf",googleId:"1q61mqrxHadfkxaabQhP-qAUL8F-dUB7I",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 13 - Punktprobe, parallele und senkrechte Geraden",type:"pdf",googleId:"1JrkPgo53N-hNidc0lviecovDIgsib9tL",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 14 - Schnittpunkte von Geraden mit den Koordinatenachsen, verschiedene Aufgabenstellungen",type:"pdf",googleId:"1SwXSkMmjsOtHBMkxgrYp0dXr_1PNhYq_",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 15 - Achsenschnittpunkte und Schnittpunkte zweier Geraden berechnen",type:"pdf",googleId:"1FazxQ_cMHWR-nnus3DX4wulVdldR0_Pb",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 16 - besondere Geraden, Spiegelungen, Abstand zweier Punkte berechnen",type:"pdf",googleId:"1Rod09nQCpd25BrCjmimmF8dbxL3fyRBv",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 17 - Lineare Gleichungssysteme lösen",type:"pdf",googleId:"1zuT03IBcVLy3fZehuhJYlPoPvJUIWoxb",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 18 - Aufstellen von linearen Gleichungssystemen",type:"pdf",googleId:"1EnOCW8qxi7oO7aVFtne3gNBHbUscQFzp",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 19 - Musterprüfungen",type:"pdf",googleId:"1u6lQV-jCGOCCD2UKr0dlcBHp-wUpT0eh",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 20 - Geometrie - Volumen und Oberflächeninhalt einer Kugel",type:"pdf",googleId:"12CF1dK1-1m5GCuuSeKIgedhMKobd52im",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 21 - Aufgaben zu Volumen und Oberflächeninhalt von Kugeln",type:"pdf",googleId:"1uTKn5jZqk-Osp6Kj2y51S0-oZoDMg2-u",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 22 - Geometrie (Kugel) MSA-Aufgaben 2023 und 2024",type:"pdf",googleId:"1uV2hYvykZYAmXm5tzLI5URY4Xld_dslZ",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 23 - Zentrische Streckung - Ähnliche Welten",type:"pdf",googleId:"1AV_zWLExA7ZdVPGkXbtfFL-3eDo1mr-Z",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 24 - Zentrische Streckung (Flächeninhalt von Bildfiguren, Volumen von Bildkörpern)",type:"pdf",googleId:"170UB-7gmhUUKsgJnLa4AbKSFt-hEgwIl",version:"v1.0",important:!1,tags:["Mathe","Klasse 10"],preview:!0},{name:"Impuls 25 - Geometrie - Strahlensätze (1)",type:"pdf",googleId:"1gWuJcll1F_yF7UGfPZKiz6lgTQfz_19K",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 26 - Geometrie - Strahlensätze (X-Figur) und Anwendung der Strahlensätze",type:"pdf",googleId:"1sZS52r03HinpWe-sLOp5Va3qfleMG5oe",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 27 - Geometrie - Satzgruppe des Pythagoras (Katheten- und Höhensatz)",type:"pdf",googleId:"1hsMy7AytPWxa8rLZziCvZpI_GdO-C3aw",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 28 - Geometrie - Satz von Thales - Rechteck in flächengleiches Quadrat umwandeln",type:"pdf",googleId:"1Kk9VC_4uoDGeP918JnIe7xzJv5s3l1vc",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 29 - Geometrie - Wiederholung vor dem Mathetest",type:"pdf",googleId:"1IL9EX-kvv4GvVNewTThCQuSORyoM9har",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},
+<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>Prüfungsvorbereitung Portal</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>:root{--accent:#ff2d2d;--bg:#0f0f0f;--card:#1e1e1e;--text:#fff;--font:"Arial",sans-serif;--fontsize:15px}body{margin:0;font-family:var(--font);font-size:var(--fontsize);background:var(--bg);color:var(--text);padding:20px;padding-bottom:220px}h1{margin-bottom:10px}.update{background:var(--accent);color:#000;padding:12px;border-radius:12px;margin-bottom:15px;font-weight:700;text-align:center}input,select,button{padding:10px;border-radius:10px;border:none;font-size:var(--fontsize)}button{cursor:pointer;font-weight:700;background:var(--accent);color:#000}.tags{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}.tag{background:#2a2a2a;padding:6px 14px;border-radius:20px;cursor:pointer}.tag.active{background:var(--accent);color:#000}.file{background:var(--card);padding:15px;border-radius:14px;margin-bottom:25px}.file strong{font-size:18px;display:block;margin-bottom:5px}.file .info{font-size:13px;color:#aaa;margin-bottom:8px}.file .buttons{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;align-items:center}.file .buttons a,.file .buttons button{text-decoration:none;padding:8px 14px;border-radius:10px;font-weight:700;cursor:pointer}.file .buttons a.view{background:#333;color:#fff}.file .buttons a.download{background:var(--accent);color:#000}.preview-frame{width:100%;height:450px;border-radius:12px;border:none;margin-top:10px;display:none}.preview-frame.show{display:block}.audio-player{background:#2a2a2a;border-radius:12px;padding:15px;margin-top:10px;display:none}.audio-player.show{display:block}.audio-player audio{width:100%;margin-bottom:10px}.filter-buttons{display:flex;gap:10px;margin:15px 0;flex-wrap:wrap}.filter-btn{background:#333;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer}.filter-btn.active{background:var(--accent);color:#000}#settingsPanel{margin-bottom:20px;background:#1a1a1a;padding:15px;border-radius:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.sticky{position:fixed;bottom:0;left:0;width:100%;background:#141414;padding:15px;border-top:2px solid var(--accent);display:flex;justify-content:space-around;flex-wrap:wrap;gap:10px;z-index:999}.pi-button{position:fixed;bottom:90px;right:20px;width:60px;height:60px;background:linear-gradient(135deg,#ff2d2d,#ff6b6b);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;cursor:pointer;z-index:1000;box-shadow:0 4px 15px rgba(255,45,45,.4);text-decoration:none;transition:.3s;border:2px solid #fff}.pi-button:hover{transform:scale(1.1);box-shadow:0 6px 20px rgba(255,45,45,.6);background:linear-gradient(135deg,#ff6b6b,#ff2d2d)}.pi-button:active{transform:scale(.95)}</style></head><body><a href="https://montessoriregensburg.github.io/pi" target="_blank" class="pi-button" title="Zur Pi-Website">π</a><div id="settingsPanel"><label>Hintergrund <input type="color" id="bgColor" value="#0f0f0f"></label><label>Textfarbe <input type="color" id="textColor" value="#ffffff"></label><label>Akzentfarbe <input type="color" id="accentColor" value="#ff2d2d"></label><label>Schriftart <select id="fontSelect"><option value="Arial, sans-serif">Arial</option><option value="Verdana, sans-serif">Verdana</option><option value="Courier New, monospace">Courier New</option><option value="Georgia, serif">Georgia</option></select></label><label>Schriftgröße <input type="number" id="fontSize" value="15" min="10" max="30">px</label><select id="presetDesigns"><option value="0">Standard (Dunkel/Rot)</option><option value="1">Hell/Blau</option><option value="2">Grün/Schwarz</option><option value="3">Violett/Dunkel</option></select><button onclick="toggleTheme()">Dark/Light</button></div><div class="update">🔔 Version 0.7 mit Pi-Link</div><h1>📂 Prüfungsvorbereitung</h1><p id="stats">📊 Downloads gesamt: 0</p><input id="search" placeholder="🔍 Datei suchen …"><div class="filter-buttons"><button class="filter-btn active" onclick="filterByType('all')">Alle</button><button class="filter-btn" onclick="filterByType('pdf')">📄 PDF</button><button class="filter-btn" onclick="filterByType('doc')">📝 Dokumente</button><button class="filter-btn" onclick="filterByType('slides')">📊 Präsentationen</button><button class="filter-btn" onclick="filterByType('mp3')">🎵 Audio</button><button class="filter-btn" onclick="filterByType('youtube')">🎬 YouTube</button></div><button onclick="toggleAllPreviews()" style="margin-bottom:20px;">👁️ Alle Vorschauen an/aus</button><div class="tags" id="tagContainer"></div><div id="fileList"></div><button onclick="login()">Admin Login</button> <button onclick="logout()">Logout</button><div id="adminPanel" style="display:none;"><h3>➕ Neue Datei</h3><input id="fname" placeholder="Dateiname"> <input id="gid" placeholder="Google Drive Link oder YouTube ID"> <select id="ftype"><option value="doc">Textdokument</option><option value="slides">Präsentation</option><option value="pdf">PDF</option><option value="mp3">Audio</option><option value="youtube">YouTube</option></select> <input id="ftags" placeholder="Tags"> <label><input type="checkbox" id="fpreview"> Vorschau</label> <button onclick="addFile()">➕ Hinzufügen</button></div><div class="sticky">
+
+
+<!-- Support Toggle Button -->
+<div id="supportToggle">💬 Support</div>
+
+<!-- Support Panel -->
+<div id="supportPanel">
+    <h3>Support</h3>
+
+    <input type="text" id="support_name" placeholder="Name">
+    <input type="email" id="support_email" placeholder="E-Mail">
+    <textarea id="support_message" placeholder="Nachricht"></textarea>
+    <input type="file" id="support_file">
+
+    <button onclick="sendSupport()">Senden</button>
+    <div id="support_status"></div>
+</div>
+
+<style>
+#supportToggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #00ffcc;
+    color: black;
+    padding: 12px 18px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-weight: bold;
+    box-shadow: 0 0 15px #00ffcc88;
+    z-index: 9999;
+}
+
+#supportPanel {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 340px;
+    max-height: 500px;
+    background: #111;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 0 25px #00ffcc55;
+    display: none;
+    flex-direction: column;
+    z-index: 9999;
+}
+
+#supportPanel h3 {
+    color: #00ffcc;
+    margin-top: 0;
+    text-align: center;
+}
+
+#supportPanel input,
+#supportPanel textarea {
+    width: 100%;
+    margin: 8px 0;
+    padding: 10px;
+    border-radius: 12px;
+    border: none;
+    background: #1a1a1a;
+    color: white;
+}
+
+#supportPanel textarea {
+    resize: none;
+    height: 80px;
+}
+
+#supportPanel button {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 12px;
+    border: none;
+    background: #00ffcc;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#support_status {
+    margin-top: 10px;
+    font-size: 14px;
+    text-align: center;
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+
+<script>
+emailjs.init("2IcY8ndM7LrI8e66W");
+
+document.getElementById("supportToggle").onclick = function () {
+    const panel = document.getElementById("supportPanel");
+    panel.style.display = panel.style.display === "flex" ? "none" : "flex";
+};
+
+async function uploadToCloudinary(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "support_upload");
+
+    const response = await fetch(
+        "https://api.cloudinary.com/v1_1/di0dhlmjq/upload",
+        { method: "POST", body: formData }
+    );
+
+    const data = await response.json();
+    if (!data.secure_url) throw new Error("Upload fehlgeschlagen");
+
+    return data.secure_url;
+}
+
+async function sendSupport() {
+    const status = document.getElementById("support_status");
+    status.innerHTML = "⏳ Wird gesendet...";
+
+    const name = document.getElementById("support_name").value;
+    const email = document.getElementById("support_email").value;
+    const message = document.getElementById("support_message").value;
+    const fileInput = document.getElementById("support_file");
+
+    if (!name || !email || !message) {
+        status.innerHTML = "❌ Bitte alles ausfüllen.";
+        return;
+    }
+
+    let fileLink = "Keine Datei";
+
+    try {
+        if (fileInput.files.length > 0) {
+            fileLink = await uploadToCloudinary(fileInput.files[0]);
+        }
+
+        await emailjs.send("lernarchiv", "template_1f2lmjk", {
+            user_name: name,
+            user_email: email,
+            message: message,
+            attachment: fileLink
+        });
+
+        status.innerHTML = "✅ Gesendet!";
+        document.getElementById("support_name").value = "";
+        document.getElementById("support_email").value = "";
+        document.getElementById("support_message").value = "";
+        document.getElementById("support_file").value = "";
+
+    } catch (error) {
+        console.error(error);
+        status.innerHTML = "❌ Fehler beim Senden.";
+    }
+}
+</script>
+
+
+<button onclick="alert('ZIP-Download benötigt Server')">📦 ZIP</button> <button onclick="login()">🔒 Admin</button> <button onclick="window.scrollTo({top:0,behavior:'smooth'})">⬆️ Top</button></div><script>const defaultFiles=[{name:"Impuls 1 - Potenzen und Wurzeln",type:"pdf",googleId:"1K3fuoW8fUEJKSF40SV1prjVcgiEYk9Q-",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 2 - Potenzen und Wurzeln",type:"pdf",googleId:"1jQPdxk7zcjjqKNGCtMIwA0GF-V0WigUA",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 3 - Potenzen und Wurzeln",type:"pdf",googleId:"1sbbDAcAOrREqA4ygLzgSBPBlNy8oT1xZ",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 4 - Wiederholung Potenzrechnung - Exponentielles Wachstum",type:"pdf",googleId:"1BVSIkECgQVE4Sn_d6Ljwr2EYvIgGIIaY",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 5 - Exponentielle Wachstumsprozesse von linearem Wachstum abgrenzen",type:"pdf",googleId:"1S9abXjtsaZr-8ikRX5nL0FiTOwQne8ZY",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 6 - exponentielles Kapitalwachstum und Zu- und Abnahmen bei der Bevölkerung...",type:"pdf",googleId:"1usqDNOjMydGuKFR5y-mWqaBhD9IIWXi_",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 7 - Berechnung von Größen beim radioaktiven Zerfall",type:"pdf",googleId:"1GbpRQUrvkF-KsFg-6yFwLw5VWlKOmczI",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 8 - Lösen von Aufgaben zum Üben für den Test nächste Woche",type:"pdf",googleId:"1OIM0SGGuAeMzClG71Kh068CzBnHZAlGb",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 9 - Aufgaben zum Üben für den Test (Abschlussrunde)",type:"pdf",googleId:"1FH3RjOvTLgqyw-QyzMN89iBCkc8ZuV41",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 10 - Einführung lineare Funktionen",type:"pdf",googleId:"1ACk6HMmUhfx8x5OonpgERVdpv26I8hiF",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 11 - Zeichnen von linearen Funktionen - Aufstellen von Funktionsgleichungen (1. Fall)",type:"pdf",googleId:"1obkEpA9Le16leqjp6G1OBNFPgTfOioUp",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 12 - Aufstellen von Funktionsgleichungen (2. Fall)",type:"pdf",googleId:"1q61mqrxHadfkxaabQhP-qAUL8F-dUB7I",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 13 - Punktprobe, parallele und senkrechte Geraden",type:"pdf",googleId:"1JrkPgo53N-hNidc0lviecovDIgsib9tL",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 14 - Schnittpunkte von Geraden mit den Koordinatenachsen, verschiedene Aufgabenstellungen",type:"pdf",googleId:"1SwXSkMmjsOtHBMkxgrYp0dXr_1PNhYq_",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 15 - Achsenschnittpunkte und Schnittpunkte zweier Geraden berechnen",type:"pdf",googleId:"1FazxQ_cMHWR-nnus3DX4wulVdldR0_Pb",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 16 - besondere Geraden, Spiegelungen, Abstand zweier Punkte berechnen",type:"pdf",googleId:"1Rod09nQCpd25BrCjmimmF8dbxL3fyRBv",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 17 - Lineare Gleichungssysteme lösen",type:"pdf",googleId:"1zuT03IBcVLy3fZehuhJYlPoPvJUIWoxb",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 18 - Aufstellen von linearen Gleichungssystemen",type:"pdf",googleId:"1EnOCW8qxi7oO7aVFtne3gNBHbUscQFzp",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 19 - Musterprüfungen",type:"pdf",googleId:"1u6lQV-jCGOCCD2UKr0dlcBHp-wUpT0eh",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 20 - Geometrie - Volumen und Oberflächeninhalt einer Kugel",type:"pdf",googleId:"12CF1dK1-1m5GCuuSeKIgedhMKobd52im",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 21 - Aufgaben zu Volumen und Oberflächeninhalt von Kugeln",type:"pdf",googleId:"1uTKn5jZqk-Osp6Kj2y51S0-oZoDMg2-u",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 22 - Geometrie (Kugel) MSA-Aufgaben 2023 und 2024",type:"pdf",googleId:"1uV2hYvykZYAmXm5tzLI5URY4Xld_dslZ",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 23 - Zentrische Streckung - Ähnliche Welten",type:"pdf",googleId:"1AV_zWLExA7ZdVPGkXbtfFL-3eDo1mr-Z",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 24 - Zentrische Streckung (Flächeninhalt von Bildfiguren, Volumen von Bildkörpern)",type:"pdf",googleId:"170UB-7gmhUUKsgJnLa4AbKSFt-hEgwIl",version:"v1.0",important:!1,tags:["Mathe","Klasse 10"],preview:!0},{name:"Impuls 25 - Geometrie - Strahlensätze (1)",type:"pdf",googleId:"1gWuJcll1F_yF7UGfPZKiz6lgTQfz_19K",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 26 - Geometrie - Strahlensätze (X-Figur) und Anwendung der Strahlensätze",type:"pdf",googleId:"1sZS52r03HinpWe-sLOp5Va3qfleMG5oe",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 27 - Geometrie - Satzgruppe des Pythagoras (Katheten- und Höhensatz)",type:"pdf",googleId:"1hsMy7AytPWxa8rLZziCvZpI_GdO-C3aw",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 28 - Geometrie - Satz von Thales - Rechteck in flächengleiches Quadrat umwandeln",type:"pdf",googleId:"1Kk9VC_4uoDGeP918JnIe7xzJv5s3l1vc",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},{name:"Impuls 29 - Geometrie - Wiederholung vor dem Mathetest",type:"pdf",googleId:"1IL9EX-kvv4GvVNewTThCQuSORyoM9har",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},
 
 
 {name:"Impuls 30 - Quadratische Funktionen - Einführung und Binomische Formeln",type:"pdf",googleId:"1v6c4IJke6fz6OXEJuCGr1nV-_e8xNYcT",version:"v1.0",important:!1,tags:["Mathe","Klasse 10","PDF"],preview:!0},
